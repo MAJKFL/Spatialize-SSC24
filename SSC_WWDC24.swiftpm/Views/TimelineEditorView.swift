@@ -10,6 +10,15 @@ import SwiftUI
 struct TimelineEditorView: View {
     @Bindable var project: Project
     
+    var numberOfBeats: Int {
+        let result = project.nodes
+            .flatMap { $0.tracks }
+            .map { getNumberOfBeatsFor(track: $0) }
+            .max() ?? 20
+        
+        return result * 2 / Int(distanceMultiplier(project.timeSignature.secondDigit))
+    }
+    
     var body: some View {
         ScrollView {
             HStack(spacing: 0) {
@@ -46,7 +55,7 @@ struct TimelineEditorView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack {
                         HStack(spacing: 45 * distanceMultiplier(project.timeSignature.secondDigit)) {
-                            ForEach(project.timeSignature.firstDigit..<101 * 2, id: \.self) { x in
+                            ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
                                 VStack(spacing: 10) {
                                     Text(getBeatStr(x))
                                         .font(.caption)
@@ -86,6 +95,12 @@ struct TimelineEditorView: View {
         }
         .edgeMaterialGradient(startPoint: .top, endPoint: .bottom, size: 20)
         .ignoresSafeArea()
+    }
+    
+    func getNumberOfBeatsFor(track: Track) -> Int {
+        var result = Int(Double(project.bpm) * track.trackLength / 60) + Int(track.start) / 100 + 10 + project.timeSignature.firstDigit
+        result -= result % project.timeSignature.firstDigit
+        return result
     }
     
     func getBeatStr(_ x: Int) -> String {

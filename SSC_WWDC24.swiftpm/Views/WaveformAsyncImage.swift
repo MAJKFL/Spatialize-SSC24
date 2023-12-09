@@ -16,6 +16,14 @@ struct WaveformAsyncImage: View {
     @State private var showPopover = false
     @State private var waveformImage: Image?
     
+    var isObstructed: Bool {
+        node.tracks
+            .contains(where: {
+                $0.start < track.start &&
+                Double(project.bpm) * ($0.trackLength / 60) * 100 + $0.start > track.start
+            })
+    }
+    
     var width: Double {
         Double(project.bpm) * (track.trackLength / 60) * 100
     }
@@ -28,9 +36,31 @@ struct WaveformAsyncImage: View {
                     .frame(width: width, height: 60)
                     .opacity(0.8)
                     .background {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(isObstructed ? .secondary.opacity(0.3) : node.color.opacity(0.7))
+                                .strokeBorder(isObstructed ? .secondary.opacity(0.7) : node.color.opacity(0.9), lineWidth: 3)
+                            
+                            if isObstructed {
+                                GeometryReader { geo in
+                                    HStack {
+                                        ForEach(0..<Int(geo.size.width) / 50, id: \.self) { i in
+                                            Spacer()
+                                            
+                                            Rectangle()
+                                                .fill(.red.opacity(0.7))
+                                                .frame(width: 10, height: geo.size.height * 1.5)
+                                                .rotationEffect(.radians(.pi / 4))
+                                                .offset(x: -20, y: -geo.size.height / 4)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .mask {
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(node.color.opacity(0.8))
-                            .strokeBorder(node.color.opacity(0.9), lineWidth: 3)
+                            .fill(.black)
                     }
             } else {
                 Rectangle()
