@@ -10,6 +10,8 @@ import SwiftUI
 struct ProjectView: View {
     @Bindable var project: Project
     
+    @State var playheadManager = PlayheadManager()
+    
     var body: some View {
         VStack(spacing: 0) {
             ScenePreviewView()
@@ -20,10 +22,31 @@ struct ProjectView: View {
             
             Divider()
             
-            TimelineEditorView(project: project)
+            TimelineEditorView(project: project, playheadManager: playheadManager)
                 .frame(height: 300)
         }
         .toolbar {
+            ToolbarItem(placement: .secondaryAction) {
+                Button {
+                    if playheadManager.isPlaying || playheadManager.offset == 0 {
+                        playheadManager.pause()
+                    } else {
+                        playheadManager.revert()
+                    }
+                } label: {
+                    Label("Stop/Revert", systemImage: playheadManager.isPlaying || playheadManager.offset == 0 ? "stop.fill" : "backward.end.fill")
+                }
+            }
+            
+            ToolbarItem(placement: .secondaryAction) {
+                Button {
+                    playheadManager.toggle()
+                } label: {
+                    Label("Play/Pause", systemImage: "play.fill")
+                }
+                .tint(playheadManager.isPlaying ? .green : .accentColor)
+            }
+            
             ToolbarItem(placement: .topBarTrailing) {
                 TimeSignaturePicker(project: project)
             }
@@ -32,6 +55,7 @@ struct ProjectView: View {
                 BPMStepper(project: project)
             }
         }
+        .toolbarRole(.editor)
         .ignoresSafeArea(.keyboard)
     }
 }

@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import Combine
 
 struct TimelineEditorView: View {
     @Bindable var project: Project
+    @State var playheadManager: PlayheadManager
     
     var numberOfBeats: Int {
         let result = project.nodes
@@ -87,6 +89,15 @@ struct TimelineEditorView: View {
                         }
                         .padding(.top, 30)
                         .padding(.leading, 4)
+                        
+                        HStack {
+                            Rectangle()
+                                .fill(.red)
+                                .frame(width: 5)
+                                .offset(x: playheadManager.offset * Double(project.bpm) / 60)
+                            
+                            Spacer()
+                        }
                     }
                     .padding(.leading, 10)
                 }
@@ -109,9 +120,9 @@ struct TimelineEditorView: View {
     
     func distanceMultiplier(_ x: Int) -> Double {
         if (x == 8) {
-            return 1;
+            return 1
         } else {
-            return 2;
+            return 2
         }
     }
     
