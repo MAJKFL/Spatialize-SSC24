@@ -20,12 +20,8 @@ struct WaveformAsyncImage: View {
         node.tracks
             .contains(where: {
                 $0.start < track.start &&
-                Double(project.bpm) * ($0.trackLength / 60) * 100 + $0.start > track.start
+                Constants.trackWidth($0, bpm: project.bpm) + $0.start > track.start
             })
-    }
-    
-    var width: Double {
-        Double(project.bpm) * (track.trackLength / 60) * 100
     }
     
     var body: some View {
@@ -33,7 +29,7 @@ struct WaveformAsyncImage: View {
             if let waveformImage {
                 waveformImage
                     .resizable()
-                    .frame(width: width, height: 60)
+                    .frame(width: Constants.trackWidth(track, bpm: project.bpm), height: 60)
                     .opacity(0.8)
                     .background {
                         ZStack {

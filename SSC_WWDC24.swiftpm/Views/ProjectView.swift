@@ -10,7 +10,12 @@ import SwiftUI
 struct ProjectView: View {
     @Bindable var project: Project
     
-    @State var playheadManager = PlayheadManager()
+    @State var playheadManager: PlayheadManager
+    
+    init(project: Project) {
+        self.project = project
+        self._playheadManager = State(initialValue: PlayheadManager(project: project))
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +31,22 @@ struct ProjectView: View {
                 .frame(height: 300)
         }
         .toolbar {
+            ToolbarItem(placement: .secondaryAction) {
+                Button {
+                    playheadManager.jumpBackward()
+                } label: {
+                    Label("Backward", systemImage: "backward.fill")
+                }
+            }
+            
+            ToolbarItem(placement: .secondaryAction) {
+                Button {
+                    playheadManager.jumpForward()
+                } label: {
+                    Label("Forward", systemImage: "forward.fill")
+                }
+            }
+            
             ToolbarItem(placement: .secondaryAction) {
                 Button {
                     if playheadManager.isPlaying || playheadManager.offset == 0 {

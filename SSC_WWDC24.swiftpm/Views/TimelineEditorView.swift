@@ -15,10 +15,10 @@ struct TimelineEditorView: View {
     var numberOfBeats: Int {
         let result = project.nodes
             .flatMap { $0.tracks }
-            .map { getNumberOfBeatsFor(track: $0) }
+            .map { getEndFor(track: $0) }
             .max() ?? 20
         
-        return result * 2 / Int(distanceMultiplier(project.timeSignature.secondDigit))
+        return Constants.getNumberOfBeatsFor(result, with: project.timeSignature)
     }
     
     var body: some View {
@@ -56,24 +56,27 @@ struct TimelineEditorView: View {
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack {
-                        HStack(spacing: 45 * distanceMultiplier(project.timeSignature.secondDigit)) {
+                        HStack(spacing: Constants.beatSpacing(forTimeSingature: project.timeSignature)) {
                             ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
                                 VStack(spacing: 10) {
                                     Text(getBeatStr(x))
                                         .font(.caption)
                                         .foregroundStyle(.secondary.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.5))
                                         .frame(width: 30, height: 20)
+                                        .onTapGesture {
+                                            playheadManager.jumpTo(x)
+                                        }
                                     
                                     Rectangle()
                                         .fill(.gray.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.3))
                                         .frame(width: 1)
                                 }
-                                .frame(width: 5 * distanceMultiplier(project.timeSignature.secondDigit))
+                                .frame(width: Constants.beatMarkerWidth(forTimeSingature: project.timeSignature))
                             }
                             
                             Spacer()
                         }
-                        .padding(.leading, 2 * distanceMultiplier(project.timeSignature.secondDigit).truncatingRemainder(dividingBy: 2))
+                        .padding(.leading, Constants.timelineLeadingPadding(forTimeSingature: project.timeSignature))
                         
                         HStack {
                             VStack(alignment: .leading, spacing: 0) {
@@ -91,13 +94,21 @@ struct TimelineEditorView: View {
                         .padding(.leading, 4)
                         
                         HStack {
-                            Rectangle()
-                                .fill(.red)
-                                .frame(width: 5)
-                                .offset(x: playheadManager.offset * Double(project.bpm) / 60)
+                            VStack(spacing: 0) {
+                                Image(systemName: "chevron.down")
+                                    .font(.largeTitle)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, 8.5)
+                                
+                                Rectangle()
+                                    .fill(.primary)
+                            }
+                            .frame(width: 2)
+                            .offset(x: playheadManager.offset)
                             
                             Spacer()
                         }
+                        .padding(.leading, 4)
                     }
                     .padding(.leading, 10)
                 }
@@ -108,22 +119,12 @@ struct TimelineEditorView: View {
         .ignoresSafeArea()
     }
     
-    func getNumberOfBeatsFor(track: Track) -> Int {
-        var result = Int(Double(project.bpm) * track.trackLength / 60) + Int(track.start) / 100 + 10 + project.timeSignature.firstDigit
-        result -= result % project.timeSignature.firstDigit
-        return result
+    func getEndFor(track: Track) -> Double {
+        Constants.trackWidth(track, bpm: project.bpm) + track.start
     }
     
     func getBeatStr(_ x: Int) -> String {
         return String(x / project.timeSignature.firstDigit) + "." + String(x % project.timeSignature.firstDigit + 1)
-    }
-    
-    func distanceMultiplier(_ x: Int) -> Double {
-        if (x == 8) {
-            return 1
-        } else {
-            return 2
-        }
     }
     
     func addNewNode() {

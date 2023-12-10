@@ -28,7 +28,7 @@ struct AudioFile: Transferable {
             source.lastPathComponent, isDirectory: false)
         if FileManager.default.fileExists(atPath: destination.path) {
             let pathExtension = destination.pathExtension
-            var fileName = destination.deletingPathExtension().lastPathComponent
+            let fileName = destination.deletingPathExtension().lastPathComponent
             destination = destination
                 .deletingLastPathComponent()
                 .appendingPathComponent(fileName)
