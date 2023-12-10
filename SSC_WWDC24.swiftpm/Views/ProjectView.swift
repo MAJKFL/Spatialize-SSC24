@@ -31,42 +31,7 @@ struct ProjectView: View {
                 .frame(height: 300)
         }
         .toolbar {
-            ToolbarItem(placement: .secondaryAction) {
-                Button {
-                    playheadManager.jumpBackward()
-                } label: {
-                    Label("Backward", systemImage: "backward.fill")
-                }
-            }
-            
-            ToolbarItem(placement: .secondaryAction) {
-                Button {
-                    playheadManager.jumpForward()
-                } label: {
-                    Label("Forward", systemImage: "forward.fill")
-                }
-            }
-            
-            ToolbarItem(placement: .secondaryAction) {
-                Button {
-                    if playheadManager.isPlaying || playheadManager.offset == 0 {
-                        playheadManager.pause()
-                    } else {
-                        playheadManager.revert()
-                    }
-                } label: {
-                    Label("Stop/Revert", systemImage: playheadManager.isPlaying || playheadManager.offset == 0 ? "stop.fill" : "backward.end.fill")
-                }
-            }
-            
-            ToolbarItem(placement: .secondaryAction) {
-                Button {
-                    playheadManager.toggle()
-                } label: {
-                    Label("Play/Pause", systemImage: "play.fill")
-                }
-                .tint(playheadManager.isPlaying ? .green : .accentColor)
-            }
+            playheadControls()
             
             ToolbarItem(placement: .topBarTrailing) {
                 TimeSignaturePicker(project: project)
@@ -78,5 +43,38 @@ struct ProjectView: View {
         }
         .toolbarRole(.editor)
         .ignoresSafeArea(.keyboard)
+    }
+    
+    func playheadControls() -> ToolbarItemGroup<some View> {
+        ToolbarItemGroup(placement: .secondaryAction) {
+            Button {
+                playheadManager.jumpBackward()
+            } label: {
+                Label("Backward", systemImage: "backward.fill")
+            }
+            
+            Button {
+                playheadManager.jumpForward()
+            } label: {
+                Label("Forward", systemImage: "forward.fill")
+            }
+            
+            Button {
+                if playheadManager.isPlaying || playheadManager.offset == 0 {
+                    playheadManager.pause()
+                } else {
+                    playheadManager.revert()
+                }
+            } label: {
+                Label("Stop/Revert", systemImage: playheadManager.isPlaying || playheadManager.offset == 0 ? "stop.fill" : "backward.end.fill")
+            }
+            
+            Button {
+                playheadManager.toggle()
+            } label: {
+                Label("Play/Pause", systemImage: "play.fill")
+            }
+            .tint(playheadManager.isPlaying ? .green : .accentColor)
+        }
     }
 }

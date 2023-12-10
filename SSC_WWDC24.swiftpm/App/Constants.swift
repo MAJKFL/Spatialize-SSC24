@@ -8,7 +8,7 @@
 import Foundation
 
 class Constants {
-    static let fullBeatWidth: Double = 100
+    static let fullBeatWidth: Double = 60
     static let fullBeatMarkerWidth: Double = 10
     
     static func beatSpacing(forTimeSingature timeSingature: TimeSignature) -> Double {

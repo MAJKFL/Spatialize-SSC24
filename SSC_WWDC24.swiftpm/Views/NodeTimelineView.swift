@@ -51,7 +51,7 @@ struct NodeTimelineView: View {
         if let otherNode = project.nodes.first(where: { $0.tracks.contains(where: { $0.fileURL == url }) }),
            let otherTrack = otherNode.tracks.first(where: { $0.fileURL == url }) {
             otherNode.tracks.removeAll(where: { $0.id == otherTrack.id })
-            otherTrack.start = location.x - location.x.truncatingRemainder(dividingBy: 25)
+            otherTrack.start = location.x - location.x.truncatingRemainder(dividingBy: Constants.fullBeatWidth / 4)
             
             node.tracks.append(otherTrack)
         } else {
@@ -67,7 +67,7 @@ struct NodeTimelineView: View {
                               fileName: url.deletingPathExtension().lastPathComponent,
                               ext: url.pathExtension,
                               trackLength: audioFile.duration,
-                              start: location.x - location.x.truncatingRemainder(dividingBy: 25))
+                              start: location.x - location.x.truncatingRemainder(dividingBy: Constants.fullBeatWidth / 4))
             
             node.tracks.append(track)
         }

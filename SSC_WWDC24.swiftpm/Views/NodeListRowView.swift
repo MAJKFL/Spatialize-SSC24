@@ -43,7 +43,6 @@ struct NodeListRowView: View {
         .padding(.horizontal)
     }
     
-    @ViewBuilder
     func detailsPopover() -> some View {
         Form {
             Section {
@@ -62,7 +61,6 @@ struct NodeListRowView: View {
              
             Section {
                 Button {
-                    
                     do {
                         let manager = FileManager.default
                         for track in node.tracks {

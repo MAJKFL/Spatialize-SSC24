@@ -24,91 +24,15 @@ struct TimelineEditorView: View {
     var body: some View {
         ScrollView {
             HStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 0) {
-                    Divider()
-                    
-                    ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
-                        NodeListRowView(project: project, node: node)
-                        
-                        Divider()
-                    }
-                    
-                    HStack {
-                        Text("New Node")
-                        
-                        Spacer()
-                        
-                        Button {
-                            addNewNode()
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.headline)
-                        }
-                    }
-                    .frame(height: 60)
-                    .padding(.horizontal)
-                    
-                    Spacer()
-                }
-                .animation(.easeIn(duration: 0.2), value: project.nodes)
-                .frame(width: 300)
-                .padding(.top, 30)
+                nodeList()
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack {
-                        HStack(spacing: Constants.beatSpacing(forTimeSingature: project.timeSignature)) {
-                            ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
-                                VStack(spacing: 10) {
-                                    Text(getBeatStr(x))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.5))
-                                        .frame(width: 30, height: 20)
-                                        .onTapGesture {
-                                            playheadManager.jumpTo(x)
-                                        }
-                                    
-                                    Rectangle()
-                                        .fill(.gray.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.3))
-                                        .frame(width: 1)
-                                }
-                                .frame(width: Constants.beatMarkerWidth(forTimeSingature: project.timeSignature))
-                            }
-                            
-                            Spacer()
-                        }
-                        .padding(.leading, Constants.timelineLeadingPadding(forTimeSingature: project.timeSignature))
+                        beatMarkers()
                         
-                        HStack {
-                            VStack(alignment: .leading, spacing: 0) {
-                                ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
-                                    NodeTimelineView(project: project, node: node)
-                                        .frame(height: 60)
-                                }
-                                
-                                Spacer()
-                            }
-                            
-                            Spacer()
-                        }
-                        .padding(.top, 30)
-                        .padding(.leading, 4)
+                        tracks()
                         
-                        HStack {
-                            VStack(spacing: 0) {
-                                Image(systemName: "chevron.down")
-                                    .font(.largeTitle)
-                                    .foregroundStyle(.secondary)
-                                    .padding(.top, 8.5)
-                                
-                                Rectangle()
-                                    .fill(.primary)
-                            }
-                            .frame(width: 2)
-                            .offset(x: playheadManager.offset)
-                            
-                            Spacer()
-                        }
-                        .padding(.leading, 4)
+                        playhead()
                     }
                     .padding(.leading, 10)
                 }
@@ -117,6 +41,98 @@ struct TimelineEditorView: View {
         }
         .edgeMaterialGradient(startPoint: .top, endPoint: .bottom, size: 20)
         .ignoresSafeArea()
+    }
+    
+    func nodeList() -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Divider()
+            
+            ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
+                NodeListRowView(project: project, node: node)
+                
+                Divider()
+            }
+            
+            HStack {
+                Text("New Node")
+                
+                Spacer()
+                
+                Button {
+                    addNewNode()
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.headline)
+                }
+            }
+            .frame(height: 60)
+            .padding(.horizontal)
+            
+            Spacer()
+        }
+        .animation(.easeIn(duration: 0.2), value: project.nodes)
+        .frame(width: 300)
+        .padding(.top, 30)
+    }
+    
+    func beatMarkers() -> some View {
+        HStack(spacing: Constants.beatSpacing(forTimeSingature: project.timeSignature)) {
+            ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
+                VStack(spacing: 10) {
+                    Text(getBeatStr(x))
+                        .font(.caption)
+                        .foregroundStyle(.secondary.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.5))
+                        .frame(width: 30, height: 20)
+                        .onTapGesture {
+                            playheadManager.jumpTo(x)
+                        }
+                    
+                    Rectangle()
+                        .fill(.gray.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.3))
+                        .frame(width: 1)
+                }
+                .frame(width: Constants.beatMarkerWidth(forTimeSingature: project.timeSignature))
+            }
+            
+            Spacer()
+        }
+        .padding(.leading, Constants.timelineLeadingPadding(forTimeSingature: project.timeSignature))
+    }
+    
+    func tracks() -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
+                    NodeTimelineView(project: project, node: node)
+                        .frame(height: 60)
+                }
+                
+                Spacer()
+            }
+            
+            Spacer()
+        }
+        .padding(.top, 30)
+        .padding(.leading, 4)
+    }
+    
+    func playhead() -> some View {
+        HStack {
+            VStack(spacing: 0) {
+                Image(systemName: "chevron.down")
+                    .font(.largeTitle)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 8.5)
+                
+                Rectangle()
+                    .fill(.primary)
+            }
+            .frame(width: 2)
+            .offset(x: playheadManager.offset)
+            
+            Spacer()
+        }
+        .padding(.leading, 4)
     }
     
     func getEndFor(track: Track) -> Double {
