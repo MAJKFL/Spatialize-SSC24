@@ -47,13 +47,13 @@ class PlayheadManager {
     }
     
     func jumpForward() {
-        let beatWidth = Constants.singleBeatWidth(forTimeSingature: project.timeSignature)
+        let beatWidth = Constants.singleBeatWidthFor(timeSignature: project.timeSignature)
         offset += beatWidth
         offset -= offset.truncatingRemainder(dividingBy: beatWidth)
     }
     
     func jumpBackward() {
-        let beatWidth = Constants.singleBeatWidth(forTimeSingature: project.timeSignature)
+        let beatWidth = Constants.singleBeatWidthFor(timeSignature: project.timeSignature)
         if offset >= beatWidth {
             offset -= beatWidth
         }
@@ -63,6 +63,6 @@ class PlayheadManager {
     
     func jumpTo(_ beatNumber: Int) {
         let beatIndex = beatNumber - project.timeSignature.firstDigit
-        offset = Double(beatIndex) * Constants.singleBeatWidth(forTimeSingature: project.timeSignature)
+        offset = Double(beatIndex) * Constants.singleBeatWidthFor(timeSignature: project.timeSignature)
     }
 }

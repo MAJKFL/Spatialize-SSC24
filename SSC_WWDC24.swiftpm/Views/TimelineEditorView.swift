@@ -13,12 +13,16 @@ struct TimelineEditorView: View {
     @State var playheadManager: PlayheadManager
     
     var numberOfBeats: Int {
-        let result = project.nodes
+        let lastTrackEnd = project.nodes
             .flatMap { $0.tracks }
             .map { getEndFor(track: $0) }
-            .max() ?? 20
+            .max()
         
-        return Constants.getNumberOfBeatsFor(result, with: project.timeSignature)
+        if let lastTrackEnd {
+            return Constants.getNumberOfBeatsFor(lastTrackEnd, with: project.timeSignature)
+        } else {
+            return Int(Constants.fullBeatWidth) / 10 * project.timeSignature.secondDigit
+        }
     }
     
     var body: some View {
@@ -71,12 +75,12 @@ struct TimelineEditorView: View {
             Spacer()
         }
         .animation(.easeIn(duration: 0.2), value: project.nodes)
-        .frame(width: 300)
+        .frame(width: 250)
         .padding(.top, 30)
     }
     
     func beatMarkers() -> some View {
-        HStack(spacing: Constants.beatSpacing(forTimeSingature: project.timeSignature)) {
+        HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
             ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
                 VStack(spacing: 10) {
                     Text(getBeatStr(x))
@@ -91,12 +95,12 @@ struct TimelineEditorView: View {
                         .fill(.gray.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.3))
                         .frame(width: 1)
                 }
-                .frame(width: Constants.beatMarkerWidth(forTimeSingature: project.timeSignature))
+                .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
             }
             
             Spacer()
         }
-        .padding(.leading, Constants.timelineLeadingPadding(forTimeSingature: project.timeSignature))
+        .padding(.leading, Constants.timelineLeadingPaddingFor(timeSignature: project.timeSignature))
     }
     
     func tracks() -> some View {

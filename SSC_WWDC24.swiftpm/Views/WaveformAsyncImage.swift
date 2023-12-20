@@ -74,12 +74,14 @@ struct WaveformAsyncImage: View {
         }
         .popover(isPresented: $showPopover, arrowEdge: .top) {
             Button {
-                node.tracks.removeAll(where: { $0.id == track.id })
-                context.delete(track)
-                do {
-                    try FileManager.default.removeItem(at: track.fileURL)
-                } catch {
-                    print(error)
+                withAnimation(.easeIn(duration: 0.1)) {
+                    node.tracks.removeAll(where: { $0.id == track.id })
+                    context.delete(track)
+                    do {
+                        try FileManager.default.removeItem(at: track.fileURL)
+                    } catch {
+                        print(error)
+                    }
                 }
             } label: {
                 Text("Delete")
