@@ -9,21 +9,24 @@ import SwiftUI
 import AVFoundation
 
 struct NodeTimelineView: View {
+    @Environment(\.isEnabled) var isEnabled
     @Bindable var project: Project
     @Bindable var node: Node
     
     var body: some View {
         ZStack {
-            Color.secondary
-                .opacity(0.05)
-                .frame(height: 60)
-                .dropDestination(for: AudioFile.self) { items, location in
-                    guard let item = items.first else { return false }
-                    
-                    handleFileDrop(item.file, at: location)
-                    
-                    return true
-                }
+            if isEnabled {
+                Color.secondary
+                    .opacity(0.05)
+                    .frame(height: 60)
+                    .dropDestination(for: AudioFile.self) { items, location in
+                        guard let item = items.first else { return false }
+                        
+                        handleFileDrop(item.file, at: location)
+                        
+                        return true
+                    }
+            }
             
             ForEach(node.tracks) { track in
                 HStack {
@@ -36,6 +39,39 @@ struct NodeTimelineView: View {
                                 .padding()
                                 .background {
                                     node.color.opacity(0.8)
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                        }
+                    
+                    
+                    Spacer()
+                }
+            }
+            
+            if !isEnabled {
+                Color.secondary
+                    .opacity(0.05)
+                    .frame(height: 60)
+                    .dropDestination(for: TransformTransfer.self) { items, location in
+                        guard let item = items.first else { return false }
+                        
+                        print(item.type)
+                        
+                        return true
+                    }
+            }
+            
+            ForEach(node.transforms) { transformModel in
+                HStack {
+                    TransformView(transformModel: transformModel)
+                        .offset(x: transformModel.start)
+                        .draggable(TransformTransfer(model: transformModel)) {
+                            Image(systemName: "arrow.triangle.swap")
+                                .foregroundStyle(Color.white)
+                                .font(.largeTitle)
+                                .padding()
+                                .background {
+                                    Color.gray.opacity(0.8)
                                 }
                                 .clipShape(RoundedRectangle(cornerRadius: 5))
                         }

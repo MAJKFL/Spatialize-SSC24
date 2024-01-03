@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct WaveformAsyncImage: View {
+    @Environment(\.isEnabled) var isEnabled
     @Environment(\.modelContext) var context
     @Bindable var project: Project
     @Bindable var node: Node
@@ -36,6 +37,7 @@ struct WaveformAsyncImage: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .fill(isObstructed ? .secondary.opacity(0.3) : node.color.opacity(0.7))
                                 .strokeBorder(isObstructed ? .secondary.opacity(0.7) : node.color.opacity(0.9), lineWidth: 3)
+                                .opacity(isEnabled ? 1 : 0.3)
                             
                             if isObstructed {
                                 GeometryReader { geo in
@@ -51,6 +53,7 @@ struct WaveformAsyncImage: View {
                                         }
                                     }
                                 }
+                                .opacity(isEnabled ? 1 : 0.3)
                             }
                         }
                     }
@@ -100,7 +103,8 @@ struct WaveformAsyncImage: View {
         guard let imageData = track.imageData, let uiImage = UIImage(data: imageData) else { return }
 
         DispatchQueue.main.async {
-            self.waveformImage = Image(uiImage: uiImage)
+            let image = Image(uiImage: uiImage)
+            self.waveformImage = image
         }
     }
 }

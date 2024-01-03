@@ -10,7 +10,8 @@ import SwiftUI
 struct ProjectView: View {
     @Bindable var project: Project
     
-    @State var playheadManager: PlayheadManager
+    @State private var playheadManager: PlayheadManager
+    @State private var editTransform = false
     
     init(project: Project) {
         self.project = project
@@ -23,14 +24,20 @@ struct ProjectView: View {
                 .toolbarRole(.editor)
                 .navigationTitle(project.name)
             
-            Spacer()
-            
-            Divider()
-            
-            TimelineEditorView(project: project, playheadManager: playheadManager)
-                .frame(height: 300)
+            TimelineEditorView(project: project, playheadManager: playheadManager, editTransform: $editTransform)
+                .frame(height: editTransform ? 400 : 280)
         }
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    withAnimation(.spring(duration: 0.15)) {
+                        editTransform.toggle()
+                    }
+                } label: {
+                    Image(systemName: editTransform ? "arrow.triangle.swap" : "waveform") // TODO: Custom 3d arrow symbol
+                }
+            }
+            
             playheadControls()
             
             ToolbarItem(placement: .topBarTrailing) {

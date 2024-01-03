@@ -11,6 +11,7 @@ import Combine
 struct TimelineEditorView: View {
     @Bindable var project: Project
     @State var playheadManager: PlayheadManager
+    @Binding var editTransform: Bool
     
     var numberOfBeats: Int {
         let lastTrackEnd = project.nodes
@@ -26,31 +27,40 @@ struct TimelineEditorView: View {
     }
     
     var body: some View {
-        ScrollView {
-            HStack(spacing: 0) {
-                nodeList()
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                    ZStack {
-                        beatMarkers()
-                        
-                        tracks()
-                        
-                        playhead()
+        VStack {
+            if editTransform {
+                ScrollView(.horizontal) {
+                    HStack {
+                        ForEach(TransformType.allCases, id: \.self) { type in
+                            TransformView(transformModel: TransformModel.defaultModel(for: type))
+                        }
                     }
-                    .padding(.leading, 10)
                 }
             }
-            .frame(minHeight: 320)
+            
+            ScrollView {
+                HStack(spacing: 0) {
+                    nodeList()
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        ZStack {
+                            beatMarkers()
+                            
+                            tracks()
+                            
+                            playhead()
+                        }
+                        .padding(.leading, 10)
+                    }
+                }
+                .frame(minHeight: 320)
+            }
         }
-        .edgeMaterialGradient(startPoint: .top, endPoint: .bottom, size: 20)
         .ignoresSafeArea()
     }
     
     func nodeList() -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Divider()
-            
             ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
                 NodeListRowView(project: project, node: node)
                 
@@ -108,6 +118,7 @@ struct TimelineEditorView: View {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
                     NodeTimelineView(project: project, node: node)
+                        .disabled(editTransform)
                         .frame(height: 60)
                 }
                 
