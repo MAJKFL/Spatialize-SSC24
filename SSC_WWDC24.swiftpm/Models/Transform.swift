@@ -82,7 +82,7 @@ class TransformModel: Transform {
             doubleFields = ["height": 0, "radius": 0]
         }
         
-        return TransformModel(start: 0, length: 200, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
+        return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
     }
 }
 

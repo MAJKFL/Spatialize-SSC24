@@ -78,14 +78,71 @@ struct TransformView: View {
 }
 
 struct TransformNodeView: View {
+    @Environment(\.isEnabled) var isEnabled
     @Environment(\.modelContext) var context
     @Bindable var project: Project
     @Bindable var node: Node
     @Bindable var transformModel: TransformModel
     @Binding var selectedTransform: TransformModel?
     
+    @State private var startPointChange: Double = 0
+    @State private var endPointChange: Double = 0
+    
     var body: some View {
         TransformView(transformModel: transformModel)
+            .overlay {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(.clear)
+                        .strokeBorder(selectedTransform?.id == transformModel.id && isEnabled ? Color.accentColor : .clear, lineWidth: 3)
+                    
+                    if selectedTransform?.id == transformModel.id {
+                        HStack {
+                            Circle()
+                                .fill(Color.accentColor)
+                                .frame(width: 12, height: 12)
+                                .offset(x: -4.5)
+                                .gesture(
+                                    DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                                        .onChanged { gesture in
+                                            startPointChange = Double(Int(gesture.translation.width / Constants.fullBeatWidth * 2)) * Constants.fullBeatWidth / 2
+                                        }
+                                )
+                            
+                            Spacer()
+                            
+                            Circle()
+                                .fill(Color.accentColor)
+                                .frame(width: 12, height: 12)
+                                .offset(x: 4.5)
+                                .gesture(
+                                    DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                                        .onChanged { gesture in
+                                            endPointChange = Double(Int(gesture.translation.width / Constants.fullBeatWidth * 2)) * Constants.fullBeatWidth / 2
+                                        }
+                                )
+                        }
+                    }
+                }
+            }
+            .onChange(of: startPointChange) { oldValue, newValue in
+                let change = newValue - oldValue;
+                
+                guard abs(change) == Constants.fullBeatWidth / 2 &&
+                        (transformModel.start > 0 || change > 0) && 
+                        (transformModel.length > Constants.fullBeatWidth * 4 || change < 0) else { return }
+                
+                transformModel.start += change;
+                transformModel.length -= change;
+            }
+            .onChange(of: endPointChange) { oldValue, newValue in
+                let change = newValue - oldValue;
+                
+                guard abs(change) == Constants.fullBeatWidth / 2 && 
+                        (transformModel.length > Constants.fullBeatWidth * 4 || change > 0) else { return }
+                
+                transformModel.length += change;
+            }
             .onTapGesture {
                 if selectedTransform?.id == transformModel.id {
                     selectedTransform = nil
@@ -96,8 +153,8 @@ struct TransformNodeView: View {
             .contextMenu {
                 Button("Delete", role: .destructive) {
                     withAnimation(.easeIn(duration: 0.1)) {
-                        node.transforms.removeAll(where: { $0.id == transformModel.id })
                         context.delete(transformModel)
+                        node.transforms.removeAll(where: { $0.id == transformModel.id })
                     }
                 }
             }
