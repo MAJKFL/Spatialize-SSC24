@@ -11,7 +11,9 @@ import Combine
 struct TimelineEditorView: View {
     @Bindable var project: Project
     @State var playheadManager: PlayheadManager
-    @Binding var editTransform: Bool
+    
+    @State private var selectedTransform: TransformModel?
+    let editTransform: Bool
     
     var numberOfBeats: Int {
         let lastTrackEnd = project.nodes
@@ -28,16 +30,6 @@ struct TimelineEditorView: View {
     
     var body: some View {
         VStack {
-            if editTransform {
-                ScrollView(.horizontal) {
-                    HStack {
-                        ForEach(TransformType.allCases, id: \.self) { type in
-                            TransformView(transformModel: TransformModel.defaultModel(for: type))
-                        }
-                    }
-                }
-            }
-            
             ScrollView {
                 HStack(spacing: 0) {
                     nodeList()
@@ -79,7 +71,7 @@ struct TimelineEditorView: View {
                         .font(.headline)
                 }
             }
-            .frame(height: 60)
+            .frame(height: Constants.nodeViewHeight)
             .padding(.horizontal)
             
             Spacer()
@@ -117,9 +109,8 @@ struct TimelineEditorView: View {
         HStack {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
-                    NodeTimelineView(project: project, node: node)
-                        .disabled(editTransform)
-                        .frame(height: 60)
+                    NodeTimelineView(project: project, node: node, selectedTransform: $selectedTransform, editTransform: editTransform)
+                        .frame(height: 80)
                 }
                 
                 Spacer()

@@ -8,6 +8,7 @@
 import Foundation
 
 class Constants {
+    static let nodeViewHeight: Double = 80
     static let fullBeatWidth: Double = 60
     static let fullBeatMarkerWidth: Double = 10
     

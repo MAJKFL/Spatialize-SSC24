@@ -20,13 +20,18 @@ struct ProjectView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ScenePreviewView()
-                .toolbarRole(.editor)
-                .navigationTitle(project.name)
+            ZStack {
+                ScenePreviewView()
+                
+                transformPicker()
+            }
             
-            TimelineEditorView(project: project, playheadManager: playheadManager, editTransform: $editTransform)
-                .frame(height: editTransform ? 400 : 280)
+            TimelineEditorView(project: project, playheadManager: playheadManager, editTransform: editTransform)
+                .frame(height: 280)
+                .zIndex(5)
         }
+        .toolbarRole(.editor)
+        .navigationTitle(project.name)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
@@ -50,6 +55,24 @@ struct ProjectView: View {
         }
         .toolbarRole(.editor)
         .ignoresSafeArea(.keyboard)
+    }
+    
+    func transformPicker() -> some View {
+        VStack {
+            Spacer()
+            
+            if editTransform {
+                ScrollView(.horizontal) {
+                    HStack(spacing: 0) {
+                        ForEach(TransformType.allCases, id: \.self) { type in
+                            TransformView(transformModel: TransformModel.defaultModel(for: type))
+                                .padding()
+                        }
+                    }
+                }
+                .background(.thinMaterial)
+            }
+        }
     }
     
     func playheadControls() -> ToolbarItemGroup<some View> {

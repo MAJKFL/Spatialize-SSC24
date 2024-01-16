@@ -13,7 +13,7 @@ import UniformTypeIdentifiers
 protocol Transform {
     var id: UUID { get set }
     var start: Double { get set }
-    var finish: Double { get set }
+    var length: Double { get set }
     
     var type: TransformType { get set }
     var doubleFields: [ String: Double ] { get set }
@@ -46,23 +46,28 @@ enum TransformType: String, CaseIterable, Codable {
 class TransformModel: Transform {
     var id: UUID
     var start: Double
-    var finish: Double
+    var length: Double
     
     var type: TransformType
     var doubleFields: [ String: Double ]
     var booleanFields: [ String: Bool ]
     
-    init(id: UUID = UUID(), start: Double, finish: Double, type: TransformType, doubleFields: [String: Double], booleanFields: [String: Bool]) {
+    init(id: UUID = UUID(), start: Double, length: Double, type: TransformType, doubleFields: [String: Double], booleanFields: [String: Bool]) {
         self.id = id
         self.start = start
-        self.finish = finish
+        self.length = length
         self.type = type
         self.doubleFields = doubleFields
         self.booleanFields = booleanFields
     }
     
-    var length: Double {
-        finish - start
+    init(transfer: TransformTransfer) {
+        self.id = transfer.id
+        self.start = transfer.start
+        self.length = transfer.length
+        self.type = transfer.type
+        self.doubleFields = transfer.doubleFields
+        self.booleanFields = transfer.booleanFields
     }
     
     static func defaultModel(for type: TransformType) -> TransformModel {
@@ -77,14 +82,14 @@ class TransformModel: Transform {
             doubleFields = ["height": 0, "radius": 0]
         }
         
-        return TransformModel(start: 0, finish: 200, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
+        return TransformModel(start: 0, length: 200, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
     }
 }
 
 struct TransformTransfer: Transform, Codable, Transferable {
     var id: UUID
     var start: Double
-    var finish: Double
+    var length: Double
     var type: TransformType
     var doubleFields: [ String: Double ]
     var booleanFields: [ String: Bool ]
@@ -92,7 +97,7 @@ struct TransformTransfer: Transform, Codable, Transferable {
     init(model: TransformModel) {
         id = model.id
         start = model.start
-        finish = model.finish
+        length = model.length
         type = model.type
         doubleFields = model.doubleFields
         booleanFields = model.booleanFields

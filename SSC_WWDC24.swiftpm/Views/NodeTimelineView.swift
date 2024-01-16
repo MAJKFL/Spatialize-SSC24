@@ -9,16 +9,19 @@ import SwiftUI
 import AVFoundation
 
 struct NodeTimelineView: View {
-    @Environment(\.isEnabled) var isEnabled
     @Bindable var project: Project
     @Bindable var node: Node
     
+    @Binding var selectedTransform: TransformModel?
+    
+    let editTransform: Bool
+    
     var body: some View {
         ZStack {
-            if isEnabled {
+            if !editTransform {
                 Color.secondary
                     .opacity(0.05)
-                    .frame(height: 60)
+                    .frame(height: Constants.nodeViewHeight)
                     .dropDestination(for: AudioFile.self) { items, location in
                         guard let item = items.first else { return false }
                         
@@ -42,20 +45,21 @@ struct NodeTimelineView: View {
                                 }
                                 .clipShape(RoundedRectangle(cornerRadius: 5))
                         }
+                        .disabled(editTransform)
                     
                     
                     Spacer()
                 }
             }
             
-            if !isEnabled {
+            if editTransform {
                 Color.secondary
                     .opacity(0.05)
-                    .frame(height: 60)
+                    .frame(height: Constants.nodeViewHeight)
                     .dropDestination(for: TransformTransfer.self) { items, location in
                         guard let item = items.first else { return false }
                         
-                        print(item.type)
+                        handleTransformDrop(item, at: location)
                         
                         return true
                     }
@@ -63,18 +67,9 @@ struct NodeTimelineView: View {
             
             ForEach(node.transforms) { transformModel in
                 HStack {
-                    TransformView(transformModel: transformModel)
+                    TransformNodeView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform)
                         .offset(x: transformModel.start)
-                        .draggable(TransformTransfer(model: transformModel)) {
-                            Image(systemName: "arrow.triangle.swap")
-                                .foregroundStyle(Color.white)
-                                .font(.largeTitle)
-                                .padding()
-                                .background {
-                                    Color.gray.opacity(0.8)
-                                }
-                                .clipShape(RoundedRectangle(cornerRadius: 5))
-                        }
+                        .disabled(!editTransform)
                     
                     
                     Spacer()
@@ -83,7 +78,18 @@ struct NodeTimelineView: View {
         }
     }
     
-    func handleFileDrop(_ url: URL, at location: CGPoint) {
+    private func handleTransformDrop(_ transfer: TransformTransfer, at location: CGPoint) {
+        let transform = TransformModel(transfer: transfer)
+        
+        if let otherNode = project.nodes.first(where: { $0.transforms.contains(where: { $0.id == transform.id }) }) {
+            otherNode.transforms.removeAll(where: { $0.id == transform.id })
+        }
+        
+        transform.start = location.x - location.x.truncatingRemainder(dividingBy: Constants.fullBeatWidth / 4)
+        node.transforms.append(transform)
+    }
+    
+    private func handleFileDrop(_ url: URL, at location: CGPoint) {
         if let otherNode = project.nodes.first(where: { $0.tracks.contains(where: { $0.fileURL == url }) }),
            let otherTrack = otherNode.tracks.first(where: { $0.fileURL == url }) {
             otherNode.tracks.removeAll(where: { $0.id == otherTrack.id })

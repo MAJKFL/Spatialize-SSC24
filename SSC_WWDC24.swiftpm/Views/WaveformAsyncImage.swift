@@ -30,7 +30,7 @@ struct WaveformAsyncImage: View {
             if let waveformImage {
                 waveformImage
                     .resizable()
-                    .frame(width: Constants.trackWidth(track, bpm: project.bpm), height: 60)
+                    .frame(width: Constants.trackWidth(track, bpm: project.bpm), height: Constants.nodeViewHeight)
                     .opacity(0.8)
                     .background {
                         ZStack {
@@ -64,7 +64,7 @@ struct WaveformAsyncImage: View {
             } else {
                 Rectangle()
                     .fill(.clear)
-                    .frame(height: 60)
+                    .frame(height: Constants.nodeViewHeight)
             }
         }
         .onAppear {
