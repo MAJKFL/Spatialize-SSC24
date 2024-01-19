@@ -39,7 +39,7 @@ struct NodeListRowView: View {
             }
         }
         .tint(node.color)
-        .frame(height: 60)
+        .frame(height: Constants.nodeViewHeight)
         .padding(.horizontal)
     }
     

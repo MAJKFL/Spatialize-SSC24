@@ -36,7 +36,3 @@ class Track: Identifiable {
             .appendingPathExtension(ext)
     }
 }
-
-extension UTType {
-    static var track: UTType { UTType(exportedAs: "com.jakubflorek.SSC-WWDC24.track") }
-}

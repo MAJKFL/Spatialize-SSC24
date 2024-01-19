@@ -80,6 +80,6 @@ class WaveGenerator {
     }
 
     static func generateWaveImage(from audioUrl: URL) async -> UIImage? {
-        return await generateWaveImage(audioUrl, CGSize(width: getDuration(audioUrl) * Constants.fullBeatMarkerWidth, height: 100), UIColor.white)
+        return await generateWaveImage(audioUrl, CGSize(width: getDuration(audioUrl) * Constants.fullBeatMarkerWidth * 10, height: 100), UIColor.white)
     }
 }

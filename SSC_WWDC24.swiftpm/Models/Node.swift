@@ -16,7 +16,7 @@ class Node: Identifiable {
     var volume: Double = 1
     var isPlaying = true
     var tracks = [Track]()
-    var transforms = [Transform]()
+    var transforms = [TransformModel]()
     private var colorData: Data?
     
     private var uiColor: UIColor? {
