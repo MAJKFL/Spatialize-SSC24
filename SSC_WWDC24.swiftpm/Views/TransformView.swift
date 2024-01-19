@@ -86,6 +86,7 @@ struct TransformNodeView: View {
     @Bindable var node: Node
     @Bindable var transformModel: TransformModel
     @Binding var selectedTransform: TransformModel?
+    @State private var showPopover = false
     
     @State private var startPointChange: Double = 0
     @State private var endPointChange: Double = 0
@@ -100,6 +101,37 @@ struct TransformNodeView: View {
     
     var body: some View {
         TransformView(transformModel: transformModel, isObstructed: isObstructed)
+            .overlay {
+                VStack {
+                    HStack {
+                        Spacer()
+                        
+                        if isEnabled {
+                            Button("Edit") {
+                                showPopover.toggle()
+                            }
+                            .padding(5)
+                            .background {
+                                Color.white
+                            }
+                            .clipShape(
+                                .rect(
+                                    topLeadingRadius: 0,
+                                    bottomLeadingRadius: 5,
+                                    bottomTrailingRadius: 0,
+                                    topTrailingRadius: 10
+                                )
+                            )
+                            .popover(isPresented: $showPopover) {
+                                editPopover()
+                                    .frame(width: 300, height: 300)
+                            }
+                        }
+                    }
+                    
+                    Spacer()
+                }
+            }
             .overlay {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
@@ -168,5 +200,50 @@ struct TransformNodeView: View {
                     }
                 }
             }
+    }
+    
+    func editPopover() -> some View {
+        NavigationView {
+            Form {
+                ForEach(Array(transformModel.doubleFields.keys).sorted(), id: \.self) { key in
+                    doubleEditRowFor(key: key)
+                }
+                
+                ForEach(Array(transformModel.booleanFields.keys).sorted(), id: \.self) { key in
+                    booleanEditRowFor(key: key)
+                }
+            }
+            .navigationTitle(transformModel.type.displayName)
+        }
+    }
+    
+    @ViewBuilder
+    func doubleEditRowFor(key: String) -> some View {
+        let binding = Binding<Double> {
+            transformModel.doubleFields[key] ?? 0
+        } set: { value in
+            transformModel.doubleFields[key] = value
+        }
+        
+        HStack {
+            Text(key)
+            
+            Spacer()
+            
+            TextField(key, value: binding, format: .number)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 100)
+        }
+    }
+    
+    @ViewBuilder
+    func booleanEditRowFor(key: String) -> some View {
+        let binding = Binding<Bool> {
+            transformModel.booleanFields[key] ?? false
+        } set: { value in
+            transformModel.booleanFields[key] = value
+        }
+        
+        Toggle(key, isOn: binding)
     }
 }
