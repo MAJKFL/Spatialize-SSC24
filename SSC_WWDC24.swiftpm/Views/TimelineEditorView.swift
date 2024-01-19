@@ -12,7 +12,7 @@ struct TimelineEditorView: View {
     @Bindable var project: Project
     @State var playheadManager: PlayheadManager
     
-    @State private var selectedTransform: TransformModel?
+    @Binding var selectedTransform: TransformModel?
     let editTransform: Bool
     
     var numberOfBeats: Int {

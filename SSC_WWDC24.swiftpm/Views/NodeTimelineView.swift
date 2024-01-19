@@ -65,7 +65,7 @@ struct NodeTimelineView: View {
                     }
             }
             
-            ForEach(node.transforms) { transformModel in
+            ForEach(node.transforms.sorted(by: { $0.start > $1.start })) { transformModel in
                 HStack {
                     TransformNodeView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform)
                         .offset(x: transformModel.start)

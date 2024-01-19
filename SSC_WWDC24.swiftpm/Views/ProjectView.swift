@@ -12,6 +12,7 @@ struct ProjectView: View {
     
     @State private var playheadManager: PlayheadManager
     @State private var editTransform = false
+    @State private var selectedTransform: TransformModel?
     
     init(project: Project) {
         self.project = project
@@ -26,7 +27,7 @@ struct ProjectView: View {
                 transformPicker()
             }
             
-            TimelineEditorView(project: project, playheadManager: playheadManager, editTransform: editTransform)
+            TimelineEditorView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
                 .frame(height: 280)
                 .zIndex(5)
         }
@@ -37,6 +38,10 @@ struct ProjectView: View {
                 Button {
                     withAnimation(.spring(duration: 0.15)) {
                         editTransform.toggle()
+                        
+                        if !editTransform {
+                            selectedTransform = nil
+                        }
                     }
                 } label: {
                     Image(systemName: editTransform ? "arrow.triangle.swap" : "waveform") // TODO: Custom 3d arrow symbol

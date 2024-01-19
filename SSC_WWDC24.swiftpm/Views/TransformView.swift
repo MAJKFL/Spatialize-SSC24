@@ -11,6 +11,8 @@ struct TransformView: View {
     @Environment(\.isEnabled) var isEnabled
     @Bindable var transformModel: TransformModel
     
+    var isObstructed = false
+    
     let rows = [GridItem(.flexible()), GridItem(.flexible())]
     
     var body: some View {
@@ -62,7 +64,7 @@ struct TransformView: View {
         }
         .foregroundStyle(.white)
         .frame(width: transformModel.length, height: Constants.nodeViewHeight)
-        .background(Color.secondary.opacity(isEnabled ? 0.7 : 0))
+        .background(isObstructed ? Color.red.opacity(isEnabled ? 0.7 : 0) : Color.secondary.opacity(isEnabled ? 0.7 : 0))
         .clipShape(RoundedRectangle(cornerRadius: isEnabled ? 10 : 0))
         .draggable(TransformTransfer(model: transformModel)) {
             Image(systemName: transformModel.type.iconName)
@@ -88,8 +90,16 @@ struct TransformNodeView: View {
     @State private var startPointChange: Double = 0
     @State private var endPointChange: Double = 0
     
+    var isObstructed: Bool {
+        node.transforms
+            .contains(where: {
+                $0.start < transformModel.start &&
+                $0.length + $0.start > transformModel.start
+            })
+    }
+    
     var body: some View {
-        TransformView(transformModel: transformModel)
+        TransformView(transformModel: transformModel, isObstructed: isObstructed)
             .overlay {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
