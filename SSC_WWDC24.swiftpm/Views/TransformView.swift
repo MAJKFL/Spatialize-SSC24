@@ -111,9 +111,7 @@ struct TransformNodeView: View {
                                 showPopover.toggle()
                             }
                             .padding(5)
-                            .background {
-                                Color.white
-                            }
+                            .background(Material.thick)
                             .clipShape(
                                 .rect(
                                     topLeadingRadius: 0,

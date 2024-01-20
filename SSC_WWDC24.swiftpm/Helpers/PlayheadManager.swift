@@ -20,6 +20,10 @@ class PlayheadManager {
     
     private var cancellables = Set<AnyCancellable>()
     
+    var isAtZero: Bool {
+        offset == 0
+    }
+    
     init(project: Project) {
         self.project = project
         

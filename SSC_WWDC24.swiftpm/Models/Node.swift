@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SceneKit
 
 @Model
 class Node: Identifiable {
@@ -15,11 +16,16 @@ class Node: Identifiable {
     var name: String
     var volume: Double = 1
     var isPlaying = true
+    
+    var initX = Float.random(in: -5 ..< 5)
+    var initY = Float.random(in: 1 ..< 5)
+    var initZ = Float.random(in: -5 ..< 5)
+    
     var tracks = [Track]()
     var transforms = [TransformModel]()
-    private var colorData: Data?
+    var colorData: Data?
     
-    private var uiColor: UIColor? {
+    var uiColor: UIColor? {
         get {
             colorData.flatMap { try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: $0) }
         }
@@ -37,10 +43,19 @@ class Node: Identifiable {
         }
     }
     
+    var initLocation: SCNVector3 {
+        SCNVector3(x: initX, y: initY, z: initZ)
+    }
     
     init(position: Int, name: String, color: UIColor) {
         self.position = position
         self.name = name
         self.colorData = try? NSKeyedArchiver.archivedData(withRootObject: color, requiringSecureCoding: false)
+    }
+}
+
+extension SCNVector3: Equatable {
+    public static func == (lhs: SCNVector3, rhs: SCNVector3) -> Bool {
+        lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z
     }
 }

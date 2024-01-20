@@ -22,14 +22,13 @@ struct ProjectView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                ScenePreviewView()
+                ScenePreviewView(project: project, playheadManager: playheadManager)
                 
                 transformPicker()
             }
             
             TimelineEditorView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
                 .frame(height: 280)
-                .zIndex(5)
         }
         .toolbarRole(.editor)
         .navigationTitle(project.name)
