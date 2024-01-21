@@ -212,6 +212,7 @@ struct TransformNodeView: View {
                 }
             }
             .navigationTitle(transformModel.type.displayName)
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     

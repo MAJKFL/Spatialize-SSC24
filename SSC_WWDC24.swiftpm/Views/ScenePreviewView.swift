@@ -9,8 +9,53 @@ import SwiftUI
 import SceneKit
 import Combine
 
+class SpeakerNode: SCNNode {
+    var nodeModel: Node!
+    
+    init(nodeModel: Node) {
+        super.init()
+        self.nodeModel = nodeModel
+        
+        let sphereGeometry = SCNSphere(radius: 3)
+        
+        let sphereMaterial = SCNMaterial()
+        sphereMaterial.diffuse.contents = nodeModel.uiColor
+        sphereGeometry.materials = [sphereMaterial]
+        
+        let spherePhysicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(geometry: sphereGeometry))
+        spherePhysicsBody.isAffectedByGravity = false
+        
+        self.name = nodeModel.id.uuidString
+        self.position = SCNVector3(0, 4.5, 0)
+        self.geometry = sphereGeometry
+        self.physicsBody = spherePhysicsBody
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func updatePosition(playheadOffset offset: Double) {
+        let previousTransform = nodeModel.transforms
+            .filter { trans in
+                trans.start + trans.length < offset
+            }
+            .max(by: { $0.start + $0.length < $1.start + $1.length })
+        
+        if let currentTransform = nodeModel.transforms.first(where: { $0.start <= offset && $0.start + $0.length >= offset }) {
+            position = currentTransform.getPositionFor(playheadOffset: offset, source: previousTransform?.endPosition ?? SCNVector3(0, 4.5, 0))
+        } else {
+            if let previousTransform {
+                position = previousTransform.endPosition
+            } else {
+                position = SCNVector3(0, 4.5, 0)
+            }
+        }
+    }
+}
+
 class EditorViewModel: ObservableObject {
-    @Published var speakerNodes = [SCNNode]()
+    @Published var speakerNodes = [SpeakerNode]()
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -24,19 +69,7 @@ class EditorViewModel: ObservableObject {
         for node in nodes {
             guard !speakerNodes.contains(where: { $0.name == node.id.uuidString }) else { continue }
             
-            let sphereGeometry = SCNSphere(radius: 3)
-            
-            let sphereMaterial = SCNMaterial()
-            sphereMaterial.diffuse.contents = node.uiColor
-            sphereGeometry.materials = [sphereMaterial]
-            
-            let spherePhysicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(geometry: sphereGeometry))
-            spherePhysicsBody.isAffectedByGravity = false
-            
-            let sphereNode = SCNNode(geometry: sphereGeometry)
-            sphereNode.name = node.id.uuidString
-            sphereNode.position = node.initLocation
-            sphereNode.physicsBody = spherePhysicsBody
+            let sphereNode = SpeakerNode(nodeModel: node)
             
             speakerNodes.append(sphereNode)
         }
@@ -46,8 +79,10 @@ class EditorViewModel: ObservableObject {
         speakerNodes.first(where: { $0.name == node.id.uuidString })?.geometry?.firstMaterial?.diffuse.contents = node.uiColor
     }
     
-    func onNodeInitLocationChange(_ node: Node) {
-        speakerNodes.first(where: { $0.name == node.id.uuidString })?.position = node.initLocation
+    func updateSpeakerNodePosition(playheadOffset offset: Double) {
+        for speakerNode in speakerNodes {
+            speakerNode.updatePosition(playheadOffset: offset)
+        }
     }
 }
 
@@ -64,11 +99,6 @@ struct ScenePreviewView: View {
                     .onChange(of: node.color) { oldValue, newValue in
                         viewModel.onNodeColorChange(node)
                     }
-                    .onChange(of: node.initLocation) { oldValue, newValue in
-                        if playheadManager.isAtZero {
-                            viewModel.onNodeInitLocationChange(node)
-                        }
-                    }
             }
             
             EditorView(viewModel: viewModel)
@@ -77,6 +107,9 @@ struct ScenePreviewView: View {
                 }
                 .onChange(of: project.nodes) { oldValue, newValue in
                     viewModel.setSpeakerNodes(for: newValue)
+                }
+                .onChange(of: playheadManager.offset) { oldValue, newValue in
+                    viewModel.updateSpeakerNodePosition(playheadOffset: newValue)
                 }
         }
     }
@@ -180,7 +213,7 @@ class EditorScene: SCNScene {
         let sphereGeometry = SCNSphere(radius: 4)
         
         let sphereMaterial = SCNMaterial()
-        sphereMaterial.diffuse.contents = UIColor.green
+        sphereMaterial.diffuse.contents = UIColor.green.withAlphaComponent(0.5)
         sphereGeometry.materials = [sphereMaterial]
         
         let spherePhysicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(geometry: sphereGeometry))

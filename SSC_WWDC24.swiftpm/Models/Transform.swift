@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 import CoreTransferable
 import UniformTypeIdentifiers
+import SceneKit
 
 protocol Transform {
     var id: UUID { get set }
@@ -70,6 +71,15 @@ class TransformModel: Transform {
         self.booleanFields = transfer.booleanFields
     }
     
+    var endPosition: SCNVector3 {
+        switch type {
+        case .move:
+            SCNVector3(doubleFields["x"] ?? 0, doubleFields["y"] ?? 0, doubleFields["z"] ?? 0)
+        case .orbit:
+            SCNVector3(x: 0, y: 0, z: 0)
+        }
+    }
+    
     static func defaultModel(for type: TransformType) -> TransformModel {
         var doubleFields: [ String: Double ] = [:]
         var booleanFields: [ String: Bool ] = [:]
@@ -83,6 +93,23 @@ class TransformModel: Transform {
         }
         
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
+    }
+    
+    func getPositionFor(playheadOffset offset: Double, source: SCNVector3) -> SCNVector3 {
+        let t = Float(round((offset - start) / length * 100) / 100)
+        
+        switch type {
+        case .move:
+            let destination = SCNVector3(doubleFields["x"] ?? 0, doubleFields["y"] ?? 0, doubleFields["z"] ?? 0)
+            
+            if !(booleanFields["interp"] ?? false) {
+                return destination
+            }
+            
+            return SCNVector3(x: (1 - t) * source.x + t * destination.x, y: (1 - t) * source.y + t * destination.y, z: (1 - t) * source.z + t * destination.z)
+        case .orbit:
+            return SCNVector3(x: 0, y: 0, z: 0)
+        }
     }
 }
 

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVFoundation
+import SceneKit
 
 struct NodeTimelineView: View {
     @Bindable var project: Project
