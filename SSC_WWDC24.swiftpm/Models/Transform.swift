@@ -76,7 +76,7 @@ class TransformModel: Transform {
         case .move:
             SCNVector3(doubleFields["x"] ?? 0, doubleFields["y"] ?? 0, doubleFields["z"] ?? 0)
         case .orbit:
-            SCNVector3(x: 0, y: 0, z: 0)
+            SCNVector3(doubleFields["radius"] ?? 0, doubleFields["height"] ?? 0, 0)
         }
     }
     
@@ -89,14 +89,14 @@ class TransformModel: Transform {
             doubleFields = ["x": 0, "y": 0, "z": 0]
             booleanFields = ["interp": false]
         case .orbit:
-            doubleFields = ["height": 0, "radius": 0]
+            doubleFields = ["height": 0, "radius": 0, "no.ofRev": 1, "heightMod": 0]
         }
         
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
     }
     
     func getPositionFor(playheadOffset offset: Double, source: SCNVector3) -> SCNVector3 {
-        let t = Float(round((offset - start) / length * 100) / 100)
+        let t = Float((offset - start) / length)
         
         switch type {
         case .move:
@@ -108,7 +108,14 @@ class TransformModel: Transform {
             
             return SCNVector3(x: (1 - t) * source.x + t * destination.x, y: (1 - t) * source.y + t * destination.y, z: (1 - t) * source.z + t * destination.z)
         case .orbit:
-            return SCNVector3(x: 0, y: 0, z: 0)
+            let radius: Float = Float(doubleFields["radius"] ?? 0)
+            let heigth: Float = Float(doubleFields["height"] ?? 0)
+            let numberOfRevolutions: Float = Float(doubleFields["no.ofRev"] ?? 1)
+            let heightModulation: Float = Float(doubleFields["heightMod"] ?? 0)
+            
+            return SCNVector3(x: cos(numberOfRevolutions * t * 2 * .pi) * radius,
+                              y: heigth + sin(t * 10 * .pi) * heightModulation,
+                              z: sin(numberOfRevolutions * t * 2 * .pi) * radius)
         }
     }
 }

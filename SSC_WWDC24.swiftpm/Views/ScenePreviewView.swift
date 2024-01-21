@@ -168,7 +168,7 @@ class EditorScene: SCNScene {
     
     private func updateNodes(_ nodes: [SCNNode]) {
         for node in rootNode.childNodes {
-            if node.name == "ground" || node.name == "listener" || node.name == "camera" { continue }
+            guard let node = node as? SpeakerNode else { continue }
             
             if !nodes.contains(where: { $0.name == node.name }) {
                 node.removeFromParentNode()
