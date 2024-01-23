@@ -66,4 +66,8 @@ class PlayheadManager {
         let beatIndex = beatNumber - project.timeSignature.firstDigit
         offset = Double(beatIndex) * Constants.singleBeatWidthFor(timeSignature: project.timeSignature)
     }
+    
+    deinit {
+        displayLink.remove(from: .main, forMode: .common)
+    }
 }

@@ -22,12 +22,12 @@ struct ProjectView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                ScenePreviewView(project: project, playheadManager: playheadManager)
+                EditorView(project: project, playheadManager: playheadManager)
                 
                 transformPicker()
             }
             
-            TimelineEditorView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
+            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
                 .frame(height: 280)
         }
         .toolbarRole(.editor)

@@ -1,13 +1,13 @@
 //
-//  File.swift
-//  
+//  TrackTimelineView.swift
+//
 //
 //  Created by Jakub Florek on 08/12/2023.
 //
 
 import SwiftUI
 
-struct WaveformAsyncImage: View {
+struct TrackTimelineView: View {
     @Environment(\.isEnabled) var isEnabled
     @Environment(\.modelContext) var context
     @Bindable var project: Project

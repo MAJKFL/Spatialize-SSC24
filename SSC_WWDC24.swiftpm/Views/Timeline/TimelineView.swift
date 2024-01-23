@@ -1,5 +1,5 @@
 //
-//  TimelineEditorView.swift
+//  TimelineView.swift
 //
 //
 //  Created by Jakub Florek on 12/11/2023.
@@ -8,7 +8,7 @@
 import SwiftUI
 import Combine
 
-struct TimelineEditorView: View {
+struct TimelineView: View {
     @Bindable var project: Project
     @State var playheadManager: PlayheadManager
     
