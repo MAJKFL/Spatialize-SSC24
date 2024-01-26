@@ -33,7 +33,7 @@ class SpeakerNode: SCNNode {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func updatePosition(playheadOffset offset: Double) {
+    func updatePosition(playheadOffset offset: Double) -> SCNVector3 {
         let previousTransform = nodeModel.transforms
             .filter { trans in
                 trans.start + trans.length < offset
@@ -49,5 +49,7 @@ class SpeakerNode: SCNNode {
                 position = SCNVector3(0, 4.5, 0)
             }
         }
+        
+        return position
     }
 }

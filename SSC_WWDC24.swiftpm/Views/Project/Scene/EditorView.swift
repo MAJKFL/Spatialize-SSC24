@@ -13,7 +13,7 @@ struct EditorView: View {
     @Bindable var project: Project
     @State var playheadManager: PlayheadManager
     
-    @StateObject var viewModel = EditorViewModel()
+    @ObservedObject var viewModel: EditorViewModel
     
     var body: some View {
         ZStack {
@@ -33,6 +33,13 @@ struct EditorView: View {
                 }
                 .onChange(of: playheadManager.offset) { oldValue, newValue in
                     viewModel.updateSpeakerNodePosition(playheadOffset: newValue)
+                }
+                .onChange(of: playheadManager.isPlaying) { oldValue, newValue in
+                    if newValue {
+                        viewModel.startEngine(atOffset: playheadManager.offset, bpm: project.bpm)
+                    } else {
+                        viewModel.stopEngine()
+                    }
                 }
         }
     }

@@ -53,7 +53,7 @@ struct TimelineView: View {
     
     func nodeList() -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
+            ForEach(project.nodes) { node in
                 NodeListRowView(project: project, node: node)
                 
                 Divider()
@@ -166,5 +166,6 @@ struct TimelineView: View {
             .max() ?? 0
         
         project.nodes.append(Node(position: currentPosition + 1, name: "New Node\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: UIColor(named: "NewNodeColor")!))
+        project.nodes.sort(by: { $0.position < $1.position })
     }
 }

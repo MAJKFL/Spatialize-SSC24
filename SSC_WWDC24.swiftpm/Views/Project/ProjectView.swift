@@ -14,6 +14,8 @@ struct ProjectView: View {
     @State private var editTransform = false
     @State private var selectedTransform: TransformModel?
     
+    @StateObject var viewModel = EditorViewModel()
+    
     init(project: Project) {
         self.project = project
         self._playheadManager = State(initialValue: PlayheadManager(project: project))
@@ -22,7 +24,7 @@ struct ProjectView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                EditorView(project: project, playheadManager: playheadManager)
+                EditorView(project: project, playheadManager: playheadManager, viewModel: viewModel)
                 
                 transformPicker()
             }
@@ -104,7 +106,9 @@ struct ProjectView: View {
             }
             
             Button {
-                playheadManager.toggle()
+                viewModel.registerAudioAssets(playheadOffset: playheadManager.offset, bpm: project.bpm) { result in
+                    playheadManager.toggle()
+                }
             } label: {
                 Label("Play/Pause", systemImage: "play.fill")
             }
