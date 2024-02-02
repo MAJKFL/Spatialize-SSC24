@@ -106,8 +106,9 @@ struct ProjectView: View {
             }
             
             Button {
-                viewModel.registerAudioAssets(playheadOffset: playheadManager.offset, bpm: project.bpm) { result in
-                    playheadManager.toggle()
+                playheadManager.toggle()
+                if playheadManager.isPlaying {
+                    viewModel.registerAudioAssets(playheadOffset: playheadManager.offset, bpm: project.bpm)
                 }
             } label: {
                 Label("Play/Pause", systemImage: "play.fill")

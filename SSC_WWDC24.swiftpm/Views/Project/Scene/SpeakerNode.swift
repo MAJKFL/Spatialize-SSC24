@@ -6,13 +6,18 @@
 //
 
 import SceneKit
+import PHASE
 
 class SpeakerNode: SCNNode {
     var nodeModel: Node!
+    var phaseEngine: PHASEEngine!
+    var phaseSource: PHASESource!
     
-    init(nodeModel: Node) {
+    init(nodeModel: Node, phaseEngine: PHASEEngine, phaseSource: PHASESource) {
         super.init()
         self.nodeModel = nodeModel
+        self.phaseEngine = phaseEngine
+        self.phaseSource = phaseSource
         
         let sphereGeometry = SCNSphere(radius: 3)
         
@@ -33,7 +38,7 @@ class SpeakerNode: SCNNode {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func updatePosition(playheadOffset offset: Double) -> SCNVector3 {
+    func updatePosition(playheadOffset offset: Double) {
         let previousTransform = nodeModel.transforms
             .filter { trans in
                 trans.start + trans.length < offset
@@ -41,15 +46,19 @@ class SpeakerNode: SCNNode {
             .max(by: { $0.start + $0.length < $1.start + $1.length })
         
         if let currentTransform = nodeModel.transforms.first(where: { $0.start <= offset && $0.start + $0.length >= offset }) {
-            position = currentTransform.getPositionFor(playheadOffset: offset, source: previousTransform?.endPosition ?? SCNVector3(0, 4.5, 0))
+            position = currentTransform.getPositionFor(playheadOffset: offset, source: previousTransform?.endPosition ?? SCNVector3(0, 13, 0))
         } else {
             if let previousTransform {
                 position = previousTransform.endPosition
             } else {
-                position = SCNVector3(0, 4.5, 0)
+                position = SCNVector3(0, 13, 0)
             }
         }
         
-        return position
+        phaseSource.transform.columns.3 = simd_make_float4(position.x, position.y, position.z, 1.0)
+    }
+    
+    deinit {
+        phaseEngine.rootObject.removeChild(phaseSource)
     }
 }
