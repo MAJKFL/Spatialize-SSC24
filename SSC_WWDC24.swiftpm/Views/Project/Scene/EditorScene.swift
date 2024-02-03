@@ -21,6 +21,7 @@ class EditorScene: SCNScene {
         createListenerRepresentation()
         createPlane()
         createCamera()
+        createDirectionIndicator()
         
         viewModel.$speakerNodes
             .sink { nodes in
@@ -50,7 +51,7 @@ class EditorScene: SCNScene {
         cameraNode.name = "camera"
         cameraNode.camera = SCNCamera()
         cameraNode.camera?.zFar = 1000
-        cameraNode.position = SCNVector3(x: 100, y: 50, z: -70)
+        cameraNode.position = SCNVector3(x: 90, y: 50, z: 100)
         cameraNode.look(at: SCNVector3(0, 0, 0))
         rootNode.addChildNode(cameraNode)
     }
@@ -88,5 +89,37 @@ class EditorScene: SCNScene {
         sphereNode.physicsBody = spherePhysicsBody
         
         rootNode.addChildNode(sphereNode)
+    }
+    
+    private func createDirectionIndicator() {
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.green
+        
+        let cone = SCNCone()
+        cone.materials = [material]
+        
+        let conePhysicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(geometry: cone))
+        conePhysicsBody.isAffectedByGravity = false
+        
+        let coneNode = SCNNode(geometry: cone)
+        coneNode.physicsBody = conePhysicsBody
+        coneNode.position = SCNVector3(0, 0, -35)
+        coneNode.eulerAngles = SCNVector3(-Double.pi / 2, 0, -Double.pi / 2)
+        coneNode.scale = SCNVector3(10, 7.5, 10)
+        
+        let cylinder = SCNCylinder()
+        cylinder.materials = [material]
+        
+        let cylinderPhysicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(geometry: cylinder))
+        cylinderPhysicsBody.isAffectedByGravity = false
+        
+        let cylinderNode = SCNNode(geometry: cylinder)
+        cylinderNode.physicsBody = cylinderPhysicsBody
+        cylinderNode.position = SCNVector3(0, 0, -30)
+        cylinderNode.eulerAngles = SCNVector3(-Double.pi / 2, 0, -Double.pi / 2)
+        cylinderNode.scale = SCNVector3(4, 12, 4)
+
+        rootNode.addChildNode(coneNode)
+        rootNode.addChildNode(cylinderNode)
     }
 }
