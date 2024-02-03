@@ -50,7 +50,7 @@ class EditorScene: SCNScene {
         cameraNode.name = "camera"
         cameraNode.camera = SCNCamera()
         cameraNode.camera?.zFar = 1000
-        cameraNode.position = SCNVector3(x: 60, y: 50, z: 120)
+        cameraNode.position = SCNVector3(x: 100, y: 50, z: -70)
         cameraNode.look(at: SCNVector3(0, 0, 0))
         rootNode.addChildNode(cameraNode)
     }
@@ -76,7 +76,7 @@ class EditorScene: SCNScene {
         let sphereGeometry = SCNSphere(radius: 4)
         
         let sphereMaterial = SCNMaterial()
-        sphereMaterial.diffuse.contents = UIColor.green.withAlphaComponent(0.5)
+        sphereMaterial.diffuse.contents = UIColor.green
         sphereGeometry.materials = [sphereMaterial]
         
         let spherePhysicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(geometry: sphereGeometry))

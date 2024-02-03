@@ -11,14 +11,18 @@ import PHASE
 class EditorViewModel: ObservableObject {
     @Published var speakerNodes = [SpeakerNode]()
     
-    let phaseEngine: PHASEEngine
-    let listener: PHASEListener
-    let spatialMixerDefinition: PHASESpatialMixerDefinition
+    @Published var playheadManager: PlayheadManager
     
-    var registeredAssetIDs = [String]()
-    var hasBeenPlayed = [String]()
+    private let phaseEngine: PHASEEngine
+    private let listener: PHASEListener
+    private let spatialMixerDefinition: PHASESpatialMixerDefinition
     
-    init() {
+    private var registeredAssetIDs = [String]()
+    private var hasBeenPlayed = [String]()
+    
+    init(playheadManager: PlayheadManager) {
+        self.playheadManager = playheadManager
+        
         phaseEngine = PHASEEngine(updateMode: .automatic)
         phaseEngine.defaultReverbPreset = .largeRoom
         
@@ -65,6 +69,8 @@ class EditorViewModel: ObservableObject {
     func updateSpeakerNodePosition(playheadOffset offset: Double) {
         for speakerNode in speakerNodes {
             speakerNode.updatePosition(playheadOffset: offset)
+            
+            guard playheadManager.isPlaying else { continue }
             
             if let currentTrack = speakerNode.nodeModel.tracks.first(where: { $0.start.isEqualTo(to: offset, withPrecision: 2) }) {
                 let id = currentTrack.id.uuidString + "-event"

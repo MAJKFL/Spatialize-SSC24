@@ -38,6 +38,7 @@ struct TrackTimelineView: View {
                                 .fill(isObstructed ? .secondary.opacity(0.3) : node.color.opacity(0.7))
                                 .strokeBorder(isObstructed ? .secondary.opacity(0.7) : node.color.opacity(0.9), lineWidth: 3)
                                 .opacity(isEnabled ? 1 : 0.3)
+                                .background(.ultraThinMaterial)
                             
                             if isObstructed {
                                 GeometryReader { geo in

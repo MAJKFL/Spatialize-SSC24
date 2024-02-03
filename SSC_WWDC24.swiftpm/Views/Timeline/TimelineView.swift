@@ -29,31 +29,41 @@ struct TimelineView: View {
     }
     
     var body: some View {
-        VStack {
-            ScrollView {
-                HStack(spacing: 0) {
-                    nodeList()
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        ZStack {
-                            beatMarkers()
-                            
-                            tracks()
-                            
-                            playhead()
-                        }
-                        .padding(.leading, 10)
+        ScrollView {
+            ZStack(alignment: .leading) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    ZStack {
+                        beatMarkers()
+                        
+                        tracks()
+                        
+                        playhead()
                     }
+                    .padding(.leading, 10)
+                    .padding(.leading, 250)
                 }
-                .frame(minHeight: 320)
+                
+                nodeList()
+                    .frame(width: 250)
+                    .background(.regularMaterial)
+                    .padding(.top, 30)
             }
+            .frame(minHeight: 320)
         }
         .ignoresSafeArea()
+        .onChange(of: playheadManager.offset) { oldValue, newValue in
+            
+            if newValue >= Double((numberOfBeats - project.timeSignature.firstDigit - 1)) *
+                (Constants.beatSpacingFor(timeSingature: project.timeSignature) +
+                Constants.beatMarkerWidthFor(timeSignature: project.timeSignature)) {
+                playheadManager.pause()
+            }
+        }
     }
     
     func nodeList() -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(project.nodes) { node in
+            ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
                 NodeListRowView(project: project, node: node)
                 
                 Divider()
@@ -77,8 +87,6 @@ struct TimelineView: View {
             Spacer()
         }
         .animation(.easeIn(duration: 0.2), value: project.nodes)
-        .frame(width: 250)
-        .padding(.top, 30)
     }
     
     func beatMarkers() -> some View {
