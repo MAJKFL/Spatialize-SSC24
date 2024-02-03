@@ -50,7 +50,7 @@ struct TransformTimelineView: View {
                             )
                             .popover(isPresented: $showPopover) {
                                 editPopover()
-                                    .frame(width: 300, height: 300)
+                                    .frame(width: 600, height: 800)
                             }
                         }
                     }
@@ -129,18 +129,22 @@ struct TransformTimelineView: View {
     }
     
     func editPopover() -> some View {
-        NavigationView {
-            Form {
-                ForEach(Array(transformModel.doubleFields.keys).sorted(), id: \.self) { key in
-                    doubleEditRowFor(key: key)
+        HStack {
+            if transformModel.type == .move {
+                TransformEditView(node: node, transformModel: transformModel)
+            } else {
+                Form {
+                    ForEach(Array(transformModel.doubleFields.keys).sorted(), id: \.self) { key in
+                        doubleEditRowFor(key: key)
+                    }
+                    
+                    ForEach(Array(transformModel.booleanFields.keys).sorted(), id: \.self) { key in
+                        booleanEditRowFor(key: key)
+                    }
                 }
-                
-                ForEach(Array(transformModel.booleanFields.keys).sorted(), id: \.self) { key in
-                    booleanEditRowFor(key: key)
-                }
+                .navigationTitle(transformModel.type.displayName)
+                .navigationBarTitleDisplayMode(.inline)
             }
-            .navigationTitle(transformModel.type.displayName)
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
     

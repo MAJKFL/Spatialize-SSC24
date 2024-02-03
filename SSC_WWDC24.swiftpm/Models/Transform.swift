@@ -95,8 +95,14 @@ class TransformModel: Transform {
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
     }
     
-    func getPositionFor(playheadOffset offset: Double, source: SCNVector3) -> SCNVector3 {
-        let t = Float((offset - start) / length)
+    func getPositionFor(playheadOffset offset: Double, source: SCNVector3, mockT: Float? = nil) -> SCNVector3 {
+        var t: Float
+        
+        if let mockT {
+            t = mockT
+        } else {
+            t = Float((offset - start) / length)
+        }
         
         switch type {
         case .move:
