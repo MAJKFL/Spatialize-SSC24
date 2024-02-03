@@ -47,7 +47,7 @@ struct ProjectView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: editTransform ? "arrow.triangle.swap" : "waveform") // TODO: Custom 3d arrow symbol
+                    Image(systemName: editTransform ? "waveform" : "arrow.triangle.swap") // TODO: Custom 3d arrow symbol
                 }
             }
             

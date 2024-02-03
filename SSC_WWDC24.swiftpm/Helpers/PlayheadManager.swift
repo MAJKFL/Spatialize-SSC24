@@ -21,7 +21,8 @@ class PlayheadManager {
         offset == 0
     }
     
-    private var everyOther = false
+    private var startTimestamp: CFTimeInterval = .zero
+    private var startOffset: Double = 0
     
     init(project: Project) {
         self.project = project
@@ -32,15 +33,18 @@ class PlayheadManager {
     }
     
     @objc func handleDisplayLink(_ displayLink: CADisplayLink) {
-        if isPlaying && everyOther {
-            offset += Double(project.bpm) / 60 * Constants.fullBeatWidth * displayLink.duration * 2
+        if isPlaying {
+            offset = startOffset + Double(project.bpm) / 60 * Constants.fullBeatWidth * (displayLink.timestamp - startTimestamp)
         }
-        
-        everyOther.toggle()
     }
     
     func toggle() {
         isPlaying.toggle()
+        
+        if isPlaying {
+            startTimestamp = displayLink.timestamp
+            startOffset = offset
+        }
     }
     
     func pause() {

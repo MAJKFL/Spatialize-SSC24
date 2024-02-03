@@ -58,6 +58,9 @@ class EditorViewModel: ObservableObject {
             try! phaseEngine.rootObject.addChild(source)
             let sphereNode = SpeakerNode(nodeModel: node, phaseEngine: phaseEngine, phaseSource: source)
             
+            let group = PHASEGroup(identifier: node.id.uuidString)
+            group.register(engine: phaseEngine)
+            
             speakerNodes.append(sphereNode)
         }
     }
@@ -69,6 +72,8 @@ class EditorViewModel: ObservableObject {
     func updateSpeakerNodePosition(playheadOffset offset: Double) {
         for speakerNode in speakerNodes {
             speakerNode.updatePosition(playheadOffset: offset)
+            
+            phaseEngine.groups[speakerNode.nodeModel.id.uuidString]?.gain = speakerNode.nodeModel.isPlaying ? speakerNode.nodeModel.volume : 0
             
             guard playheadManager.isPlaying else { continue }
             
@@ -102,29 +107,31 @@ class EditorViewModel: ObservableObject {
         registeredAssetIDs = [String]()
         hasBeenPlayed = [String]()
         
-        let tracks = speakerNodes.flatMap({ $0.nodeModel.tracks })
-        
-        for track in tracks {
-            let width = Constants.trackWidth(track, bpm: bpm)
-            guard offset <= track.start + width else { continue }
-            
-            do {
-                let url = track.fileURL
+        for node in speakerNodes.compactMap({ $0.nodeModel }) {
+            for track in node.tracks {
+                let width = Constants.trackWidth(track, bpm: bpm)
+                guard offset <= track.start + width else { continue }
                 
-                let _ = try phaseEngine.assetRegistry.registerSoundAsset(url: url, identifier: track.id.uuidString, assetType: .streamed, channelLayout: .init(layoutTag: kAudioChannelLayoutTag_Stereo), normalizationMode: .dynamic)
-                
-                let samplerNodeDefinition = PHASESamplerNodeDefinition(soundAssetIdentifier: track.id.uuidString, mixerDefinition: spatialMixerDefinition)
-                samplerNodeDefinition.playbackMode = .oneShot
-                samplerNodeDefinition.setCalibrationMode(calibrationMode: .relativeSpl, level: 0)
-                samplerNodeDefinition.cullOption = .sleepWakeAtRealtimeOffset
-                
-                let id = track.id.uuidString + "-event"
-                let _ = try phaseEngine.assetRegistry.registerSoundEventAsset(rootNode: samplerNodeDefinition, identifier: id)
-                
-                registeredAssetIDs.append(track.id.uuidString)
-                registeredAssetIDs.append(id)
-            } catch {
-                print(error.localizedDescription)
+                do {
+                    let url = track.fileURL
+                    
+                    let _ = try phaseEngine.assetRegistry.registerSoundAsset(url: url, identifier: track.id.uuidString, assetType: .streamed, channelLayout: .init(layoutTag: kAudioChannelLayoutTag_Stereo), normalizationMode: .dynamic)
+                    
+                    let samplerNodeDefinition = PHASESamplerNodeDefinition(soundAssetIdentifier: track.id.uuidString, mixerDefinition: spatialMixerDefinition)
+                    samplerNodeDefinition.playbackMode = .oneShot
+                    samplerNodeDefinition.setCalibrationMode(calibrationMode: .relativeSpl, level: 0)
+                    samplerNodeDefinition.cullOption = .sleepWakeAtRealtimeOffset
+                    
+                    samplerNodeDefinition.group = phaseEngine.groups[node.id.uuidString]
+                    
+                    let id = track.id.uuidString + "-event"
+                    let _ = try phaseEngine.assetRegistry.registerSoundEventAsset(rootNode: samplerNodeDefinition, identifier: id)
+                    
+                    registeredAssetIDs.append(track.id.uuidString)
+                    registeredAssetIDs.append(id)
+                } catch {
+                    print(error.localizedDescription)
+                }
             }
         }
     }

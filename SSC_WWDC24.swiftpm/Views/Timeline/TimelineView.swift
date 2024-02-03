@@ -98,6 +98,7 @@ struct TimelineView: View {
                         .foregroundStyle(.secondary.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.5))
                         .frame(width: 30, height: 20)
                         .onTapGesture {
+                            guard !playheadManager.isPlaying else { return }
                             playheadManager.jumpTo(x)
                         }
                     
