@@ -14,22 +14,25 @@ struct ProjectView: View {
     @State private var editTransform = false
     @State private var selectedTransform: TransformModel?
     
+    @StateObject var viewModel: EditorViewModel
+    
     init(project: Project) {
         self.project = project
-        self._playheadManager = State(initialValue: PlayheadManager(project: project))
+        let playheadMng = PlayheadManager(project: project)
+        self._playheadManager = State(initialValue: playheadMng)
+        self._viewModel = StateObject(wrappedValue: EditorViewModel(playheadManager: playheadMng))
     }
     
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                ScenePreviewView()
+                EditorView(project: project, playheadManager: playheadManager, viewModel: viewModel)
                 
                 transformPicker()
             }
             
-            TimelineEditorView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
+            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
                 .frame(height: 280)
-                .zIndex(5)
         }
         .toolbarRole(.editor)
         .navigationTitle(project.name)
@@ -44,7 +47,7 @@ struct ProjectView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: editTransform ? "arrow.triangle.swap" : "waveform") // TODO: Custom 3d arrow symbol
+                    Image(systemName: editTransform ? "waveform" : "arrow.triangle.swap") // TODO: Custom 3d arrow symbol
                 }
             }
             
@@ -52,14 +55,23 @@ struct ProjectView: View {
             
             ToolbarItem(placement: .topBarTrailing) {
                 TimeSignaturePicker(project: project)
+                    .disabled(playheadManager.isPlaying)
             }
             
             ToolbarItem(placement: .topBarTrailing) {
                 BPMStepper(project: project)
+                    .disabled(playheadManager.isPlaying)
             }
         }
         .toolbarRole(.editor)
         .ignoresSafeArea(.keyboard)
+        .onChange(of: project) { oldValue, newValue in
+            playheadManager.pause()
+            playheadManager.revert()
+            viewModel.stopEngine()
+            playheadManager.project = newValue
+            viewModel.updateSpeakerNodePosition(playheadOffset: 0)
+        }
     }
     
     func transformPicker() -> some View {
@@ -70,7 +82,7 @@ struct ProjectView: View {
                 ScrollView(.horizontal) {
                     HStack(spacing: 0) {
                         ForEach(TransformType.allCases, id: \.self) { type in
-                            TransformView(transformModel: TransformModel.defaultModel(for: type))
+                            TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)
                                 .padding()
                         }
                     }
@@ -87,12 +99,14 @@ struct ProjectView: View {
             } label: {
                 Label("Backward", systemImage: "backward.fill")
             }
+            .disabled(playheadManager.isPlaying)
             
             Button {
                 playheadManager.jumpForward()
             } label: {
                 Label("Forward", systemImage: "forward.fill")
             }
+            .disabled(playheadManager.isPlaying)
             
             Button {
                 if playheadManager.isPlaying || playheadManager.offset == 0 {
@@ -106,6 +120,9 @@ struct ProjectView: View {
             
             Button {
                 playheadManager.toggle()
+                if playheadManager.isPlaying {
+                    viewModel.registerAudioAssets(playheadOffset: playheadManager.offset, bpm: project.bpm)
+                }
             } label: {
                 Label("Play/Pause", systemImage: "play.fill")
             }

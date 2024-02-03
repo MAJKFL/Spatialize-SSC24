@@ -1,5 +1,5 @@
 //
-//  TimelineEditorView.swift
+//  TimelineView.swift
 //
 //
 //  Created by Jakub Florek on 12/11/2023.
@@ -8,7 +8,7 @@
 import SwiftUI
 import Combine
 
-struct TimelineEditorView: View {
+struct TimelineView: View {
     @Bindable var project: Project
     @State var playheadManager: PlayheadManager
     
@@ -29,26 +29,36 @@ struct TimelineEditorView: View {
     }
     
     var body: some View {
-        VStack {
-            ScrollView {
-                HStack(spacing: 0) {
-                    nodeList()
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        ZStack {
-                            beatMarkers()
-                            
-                            tracks()
-                            
-                            playhead()
-                        }
-                        .padding(.leading, 10)
+        ScrollView {
+            ZStack(alignment: .leading) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    ZStack {
+                        beatMarkers()
+                        
+                        tracks()
+                        
+                        playhead()
                     }
+                    .padding(.leading, 10)
+                    .padding(.leading, 250)
                 }
-                .frame(minHeight: 320)
+                
+                nodeList()
+                    .frame(width: 250)
+                    .background(.regularMaterial)
+                    .padding(.top, 30)
             }
+            .frame(minHeight: 320)
         }
         .ignoresSafeArea()
+        .onChange(of: playheadManager.offset) { oldValue, newValue in
+            
+            if newValue >= Double((numberOfBeats - project.timeSignature.firstDigit - 1)) *
+                (Constants.beatSpacingFor(timeSingature: project.timeSignature) +
+                Constants.beatMarkerWidthFor(timeSignature: project.timeSignature)) {
+                playheadManager.pause()
+            }
+        }
     }
     
     func nodeList() -> some View {
@@ -77,8 +87,6 @@ struct TimelineEditorView: View {
             Spacer()
         }
         .animation(.easeIn(duration: 0.2), value: project.nodes)
-        .frame(width: 250)
-        .padding(.top, 30)
     }
     
     func beatMarkers() -> some View {
@@ -90,6 +98,7 @@ struct TimelineEditorView: View {
                         .foregroundStyle(.secondary.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.5))
                         .frame(width: 30, height: 20)
                         .onTapGesture {
+                            guard !playheadManager.isPlaying else { return }
                             playheadManager.jumpTo(x)
                         }
                     
@@ -166,5 +175,6 @@ struct TimelineEditorView: View {
             .max() ?? 0
         
         project.nodes.append(Node(position: currentPosition + 1, name: "New Node\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: UIColor(named: "NewNodeColor")!))
+        project.nodes.sort(by: { $0.position < $1.position })
     }
 }

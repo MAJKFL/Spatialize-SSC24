@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct NodeListRowView: View {
+    @Environment(\.modelContext) var context
     @Bindable var project: Project
     @Bindable var node: Node
     
@@ -61,6 +62,7 @@ struct NodeListRowView: View {
              
             Section {
                 Button {
+                    context.delete(node)
                     do {
                         let manager = FileManager.default
                         for track in node.tracks {

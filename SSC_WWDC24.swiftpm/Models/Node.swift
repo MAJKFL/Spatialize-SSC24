@@ -15,11 +15,12 @@ class Node: Identifiable {
     var name: String
     var volume: Double = 1
     var isPlaying = true
+    
     var tracks = [Track]()
     var transforms = [TransformModel]()
-    private var colorData: Data?
+    var colorData: Data?
     
-    private var uiColor: UIColor? {
+    var uiColor: UIColor? {
         get {
             colorData.flatMap { try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: $0) }
         }
@@ -36,7 +37,6 @@ class Node: Identifiable {
             uiColor = UIColor(value)
         }
     }
-    
     
     init(position: Int, name: String, color: UIColor) {
         self.position = position

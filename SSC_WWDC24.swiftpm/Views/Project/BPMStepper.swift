@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct BPMStepper: View {
+    @Environment(\.isEnabled) var isEnabled
+    
     @Bindable var project: Project
     
     @State private var dragOffset = 0
@@ -18,10 +20,11 @@ struct BPMStepper: View {
         Stepper(value: $project.bpm.animation(), in: 5...200) {
             HStack(spacing: 0) {
                 Text("BPM: \(project.bpm)")
+                    .foregroundStyle(.primary.opacity(isEnabled ? 1 : 0.3))
                 
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.secondary.opacity(isEnabled ? 1 : 0.3))
             }
                 .monospaced()
                 .frame(height: 33)

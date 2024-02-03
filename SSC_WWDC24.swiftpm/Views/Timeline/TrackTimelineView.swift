@@ -1,13 +1,13 @@
 //
-//  File.swift
-//  
+//  TrackTimelineView.swift
+//
 //
 //  Created by Jakub Florek on 08/12/2023.
 //
 
 import SwiftUI
 
-struct WaveformAsyncImage: View {
+struct TrackTimelineView: View {
     @Environment(\.isEnabled) var isEnabled
     @Environment(\.modelContext) var context
     @Bindable var project: Project
@@ -38,6 +38,7 @@ struct WaveformAsyncImage: View {
                                 .fill(isObstructed ? .secondary.opacity(0.3) : node.color.opacity(0.7))
                                 .strokeBorder(isObstructed ? .secondary.opacity(0.7) : node.color.opacity(0.9), lineWidth: 3)
                                 .opacity(isEnabled ? 1 : 0.3)
+                                .background(.ultraThinMaterial)
                             
                             if isObstructed {
                                 GeometryReader { geo in

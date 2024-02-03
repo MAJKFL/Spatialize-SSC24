@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVFoundation
+import SceneKit
 
 struct NodeTimelineView: View {
     @Bindable var project: Project
@@ -33,7 +34,7 @@ struct NodeTimelineView: View {
             
             ForEach(node.tracks) { track in
                 HStack {
-                    WaveformAsyncImage(project: project, node: node, track: track)
+                    TrackTimelineView(project: project, node: node, track: track)
                         .offset(x: track.start)
                         .draggable(AudioFile(file: track.fileURL)) {
                             Image(systemName: "waveform")
@@ -65,9 +66,9 @@ struct NodeTimelineView: View {
                     }
             }
             
-            ForEach(node.transforms.sorted(by: { $0.start > $1.start })) { transformModel in
+            ForEach(node.transforms) { transformModel in
                 HStack {
-                    TransformNodeView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform)
+                    TransformTimelineView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform)
                         .offset(x: transformModel.start)
                         .disabled(!editTransform)
                     
@@ -87,6 +88,7 @@ struct NodeTimelineView: View {
         
         transform.start = location.x - location.x.truncatingRemainder(dividingBy: Constants.fullBeatWidth / 4)
         node.transforms.append(transform)
+        node.transforms.sort(by: { $0.start > $1.start })
     }
     
     private func handleFileDrop(_ url: URL, at location: CGPoint) {

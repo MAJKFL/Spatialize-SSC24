@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Combine
 
 @Observable 
 class PlayheadManager {
@@ -16,26 +15,36 @@ class PlayheadManager {
     
     private(set) var isPlaying = false
     
-    private var mainTimer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
+    private var displayLink: CADisplayLink!
     
-    private var cancellables = Set<AnyCancellable>()
+    var isAtZero: Bool {
+        offset == 0
+    }
+    
+    private var startTimestamp: CFTimeInterval = .zero
+    private var startOffset: Double = 0
     
     init(project: Project) {
         self.project = project
         
-        mainTimer
-            .sink(receiveValue: onTimerReceive)
-            .store(in: &cancellables)
+        let displayLink = CADisplayLink(target: self, selector: #selector(handleDisplayLink))
+        displayLink.add(to: .main, forMode: .common)
+        self.displayLink = displayLink
     }
     
-    private func onTimerReceive(_ output: Timer.TimerPublisher.Output) {
+    @objc func handleDisplayLink(_ displayLink: CADisplayLink) {
         if isPlaying {
-            offset += Double(project.bpm) / 6000 * Constants.fullBeatWidth
+            offset = startOffset + Double(project.bpm) / 60 * Constants.fullBeatWidth * (displayLink.timestamp - startTimestamp)
         }
     }
     
     func toggle() {
         isPlaying.toggle()
+        
+        if isPlaying {
+            startTimestamp = displayLink.timestamp
+            startOffset = offset
+        }
     }
     
     func pause() {
@@ -64,5 +73,9 @@ class PlayheadManager {
     func jumpTo(_ beatNumber: Int) {
         let beatIndex = beatNumber - project.timeSignature.firstDigit
         offset = Double(beatIndex) * Constants.singleBeatWidthFor(timeSignature: project.timeSignature)
+    }
+    
+    deinit {
+        displayLink.remove(from: .main, forMode: .common)
     }
 }
