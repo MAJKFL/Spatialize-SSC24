@@ -126,7 +126,8 @@ struct ProjectView: View {
             } label: {
                 Label("Play/Pause", systemImage: "play.fill")
             }
-            .tint(playheadManager.isPlaying ? .green : .accentColor)
+            .buttonStyle(.plain)
+            .foregroundStyle(playheadManager.isPlaying ? .green : .accentColor)
         }
     }
 }

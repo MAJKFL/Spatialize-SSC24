@@ -10,6 +10,7 @@ import SwiftData
 import CoreTransferable
 import UniformTypeIdentifiers
 import SceneKit
+import SwiftUI
 
 protocol Transform {
     var id: UUID { get set }
@@ -39,6 +40,27 @@ enum TransformType: String, CaseIterable, Codable {
             "arrow.up.right.circle"
         case .orbit:
             "arrow.clockwise.circle"
+        }
+    }
+    
+    var displayDescription: LocalizedStringKey {
+        switch self {
+        case .move:
+            """
+            This transform moves the node to the specified coordinates.
+            Parameters:
+            - **x**, **y**, **z** - Destination point components
+            - **Interpolate** - Indicate whether to linearly interpolate between source and destination
+            """
+        case .orbit:
+            """
+            This transform moves the node circularly around the origin.
+            Parameters:
+            - **h** - Base height of the node
+            - **r** - Radius of the orbit
+            - **rev** - Number of revolutions
+            - **hMod** - Height modulation
+            """
         }
     }
 }
@@ -76,7 +98,7 @@ class TransformModel: Transform {
         case .move:
             SCNVector3(doubleFields["x"] ?? 0, doubleFields["y"] ?? 0, doubleFields["z"] ?? 0)
         case .orbit:
-            SCNVector3(doubleFields["radius"] ?? 0, doubleFields["height"] ?? 0, 0)
+            SCNVector3(0, doubleFields["height"] ?? 0, 0)
         }
     }
     
@@ -89,7 +111,7 @@ class TransformModel: Transform {
             doubleFields = ["x": 0, "y": 0, "z": 0]
             booleanFields = ["interp": false]
         case .orbit:
-            doubleFields = ["height": 0, "radius": 0, "no.ofRev": 1, "heightMod": 0]
+            doubleFields = ["height": 0, "radius": 0, "rev": 1, "hMod": 0]
         }
         
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
@@ -116,12 +138,12 @@ class TransformModel: Transform {
         case .orbit:
             let radius: Float = Float(doubleFields["radius"] ?? 0)
             let heigth: Float = Float(doubleFields["height"] ?? 0)
-            let numberOfRevolutions: Float = Float(doubleFields["no.ofRev"] ?? 1)
-            let heightModulation: Float = Float(doubleFields["heightMod"] ?? 0)
+            let numberOfRevolutions: Float = Float(doubleFields["rev"] ?? 1)
+            let heightModulation: Float = Float(doubleFields["hMod"] ?? 0)
             
-            return SCNVector3(x: cos(numberOfRevolutions * t * 2 * .pi) * radius,
-                              y: heigth + sin(t * 10 * .pi) * heightModulation,
-                              z: sin(numberOfRevolutions * t * 2 * .pi) * radius)
+            return SCNVector3(x: cos(numberOfRevolutions * t * 2 * .pi - .pi / 2) * radius,
+                              y: heigth + sin(t * 10 * .pi - .pi / 2) * heightModulation,
+                              z: sin(numberOfRevolutions * t * 2 * .pi - .pi / 2) * radius)
         }
     }
 }

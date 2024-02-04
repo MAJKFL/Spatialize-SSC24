@@ -49,7 +49,7 @@ struct TransformTimelineView: View {
                                 )
                             )
                             .popover(isPresented: $showPopover) {
-                                editPopover()
+                                TransformEditView(project: project, node: node, transformModel: transformModel)
                                     .frame(width: 600, height: 800)
                             }
                         }
@@ -126,55 +126,5 @@ struct TransformTimelineView: View {
                     }
                 }
             }
-    }
-    
-    func editPopover() -> some View {
-        HStack {
-            if transformModel.type == .move {
-                TransformEditView(node: node, transformModel: transformModel)
-            } else {
-                Form {
-                    ForEach(Array(transformModel.doubleFields.keys).sorted(), id: \.self) { key in
-                        doubleEditRowFor(key: key)
-                    }
-                    
-                    ForEach(Array(transformModel.booleanFields.keys).sorted(), id: \.self) { key in
-                        booleanEditRowFor(key: key)
-                    }
-                }
-                .navigationTitle(transformModel.type.displayName)
-                .navigationBarTitleDisplayMode(.inline)
-            }
-        }
-    }
-    
-    @ViewBuilder
-    func doubleEditRowFor(key: String) -> some View {
-        let binding = Binding<Double> {
-            transformModel.doubleFields[key] ?? 0
-        } set: { value in
-            transformModel.doubleFields[key] = value
-        }
-        
-        HStack {
-            Text(key)
-            
-            Spacer()
-            
-            TextField(key, value: binding, format: .number)
-                .multilineTextAlignment(.trailing)
-                .frame(width: 100)
-        }
-    }
-    
-    @ViewBuilder
-    func booleanEditRowFor(key: String) -> some View {
-        let binding = Binding<Bool> {
-            transformModel.booleanFields[key] ?? false
-        } set: { value in
-            transformModel.booleanFields[key] = value
-        }
-        
-        Toggle(key, isOn: binding)
     }
 }

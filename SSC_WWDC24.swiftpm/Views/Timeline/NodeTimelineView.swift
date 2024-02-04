@@ -48,7 +48,6 @@ struct NodeTimelineView: View {
                         }
                         .disabled(editTransform)
                     
-                    
                     Spacer()
                 }
             }

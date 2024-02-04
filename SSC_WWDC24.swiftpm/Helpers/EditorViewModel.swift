@@ -43,12 +43,13 @@ class EditorViewModel: ObservableObject {
         spatialMixerDefinition.distanceModelParameters = distanceModelParameters
     }
     
-    func setSpeakerNodes(for nodes: [Node]) {
-        speakerNodes.removeAll(where: { speakerNode in
-            !nodes.contains(where: { node in
-                node.id.uuidString == speakerNode.name
-            })
-        })
+    func setSpeakerNodes(for nodes: [Node]) {        
+        for speakerNode in speakerNodes {
+            if !nodes.contains(where: { $0.id == speakerNode.nodeModel.id }) {
+                phaseEngine.rootObject.removeChild(speakerNode.phaseSource)
+                speakerNodes.removeAll(where: { $0.nodeModel.id == speakerNode.nodeModel.id })
+            }
+        }
         
         for node in nodes {
             guard !speakerNodes.contains(where: { $0.name == node.id.uuidString }) else { continue }
@@ -57,9 +58,6 @@ class EditorViewModel: ObservableObject {
             source.transform = matrix_identity_float4x4
             try! phaseEngine.rootObject.addChild(source)
             let sphereNode = SpeakerNode(nodeModel: node, phaseEngine: phaseEngine, phaseSource: source)
-            
-            let group = PHASEGroup(identifier: node.id.uuidString)
-            group.register(engine: phaseEngine)
             
             speakerNodes.append(sphereNode)
         }
@@ -73,7 +71,7 @@ class EditorViewModel: ObservableObject {
         for speakerNode in speakerNodes {
             speakerNode.updatePosition(playheadOffset: offset)
             
-            phaseEngine.groups[speakerNode.nodeModel.id.uuidString]?.gain = speakerNode.nodeModel.isPlaying ? speakerNode.nodeModel.volume : 0
+            speakerNode.phaseSource.gain = speakerNode.nodeModel.isPlaying ? speakerNode.nodeModel.volume : 0
             
             guard playheadManager.isPlaying else { continue }
             
@@ -95,15 +93,6 @@ class EditorViewModel: ObservableObject {
     
     /// Registering all audio assets, should be run once when resuming playback
     func registerAudioAssets(playheadOffset offset: Double, bpm: Int) {
-        for id in registeredAssetIDs {
-            if id.contains("event") {
-                let soundEvent = try? PHASESoundEvent(engine: phaseEngine, assetIdentifier: id)
-                soundEvent?.stopAndInvalidate()
-            }
-            
-            phaseEngine.assetRegistry.unregisterAsset(identifier: id, completion: nil)
-        }
-        
         registeredAssetIDs = [String]()
         hasBeenPlayed = [String]()
         
@@ -156,8 +145,16 @@ class EditorViewModel: ObservableObject {
         }
     }
     
-    func stopEngine() {
-        phaseEngine.stop()
+    func stopEngine() {        
+        for event in self.phaseEngine.soundEvents {
+            event.stopAndInvalidate()
+        }
+        
+        self.phaseEngine.stop()
+        
+        for registeredAssetID in self.registeredAssetIDs {
+            self.phaseEngine.assetRegistry.unregisterAsset(identifier: registeredAssetID)
+        }
     }
 }
 

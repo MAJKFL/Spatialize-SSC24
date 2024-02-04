@@ -9,6 +9,7 @@ import SwiftUI
 import SceneKit
 
 struct TransformEditView: View {
+    let project: Project
     let node: Node
     @Bindable var transformModel: TransformModel
     
@@ -48,30 +49,6 @@ struct TransformEditView: View {
     let timer = Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()
     
     var body: some View {
-        let xBinding = Binding {
-            transformModel.doubleFields["x"] ?? 0
-        } set: { value in
-            transformModel.doubleFields["x"] = value
-        }
-        
-        let yBinding = Binding {
-            transformModel.doubleFields["y"] ?? 0
-        } set: { value in
-            transformModel.doubleFields["y"] = value
-        }
-        
-        let zBinding = Binding {
-            transformModel.doubleFields["z"] ?? 0
-        } set: { value in
-            transformModel.doubleFields["z"] = value
-        }
-        
-        let interpBinding = Binding {
-            transformModel.booleanFields["interp"] ?? true
-        } set: { value in
-            transformModel.booleanFields["interp"] = value
-        }
-
         NavigationView {
             Form {
                 Section {
@@ -84,69 +61,27 @@ struct TransformEditView: View {
                             Rectangle()
                                 .fill(.primary)
                                 .frame(width: 2)
-                                .offset(x: mockPlayheadOffset - geo.size.width / 2)
+                                .offset(x: (mockPlayheadOffset / transformModel.length) * geo.size.width - geo.size.width / 2)
                             
                             Rectangle()
                                 .fill(.secondary)
                                 .frame(height: 3)
                         }
                         .onReceive(timer) { publisher in
-                            mockPlayheadOffset = (mockPlayheadOffset + 3).truncatingRemainder(dividingBy: geo.size.width)
+                            mockPlayheadOffset = (mockPlayheadOffset + (Double(project.bpm) / 60)).truncatingRemainder(dividingBy: transformModel.length)
                             
-                            transformPreviewNode.position = transformModel.getPositionFor(playheadOffset: mockPlayheadOffset, source: SCNVector3(0, 13, 0), mockT: Float(mockPlayheadOffset / geo.size.width))
+                            transformPreviewNode.position = transformModel.getPositionFor(playheadOffset: mockPlayheadOffset, source: SCNVector3(0, 13, 0), mockT: Float(mockPlayheadOffset / transformModel.length))
                         }
                     }
                     
-                    Text("This transform moves the node to the specified coordinates. Possibly, linearly interpolates between the source and the destination.")
+                    Text(transformModel.type.displayDescription)
                 }
                 
-                Section("parameters") {
-                    HStack {
-                        Text("x: \(String(format: "%.1f", transformModel.doubleFields["x"] ?? 0))")
-                        
-                        Spacer()
-                        
-                        Text("-50")
-                            .frame(width: 30)
-                        
-                        Slider(value: xBinding, in: -50...50)
-                            .frame(width: 380)
-                        
-                        Text("50")
-                            .frame(width: 30)
-                    }
-                    
-                    HStack {
-                        Text("y: \(String(format: "%.1f", transformModel.doubleFields["y"] ?? 0))")
-                        
-                        Spacer()
-                        
-                        Text("0")
-                            .frame(width: 30)
-                        
-                        Slider(value: yBinding, in: 0...50)
-                            .frame(width: 380)
-                        
-                        Text("50")
-                            .frame(width: 30)
-                    }
-                    
-                    HStack {
-                        Text("z: \(String(format: "%.1f", transformModel.doubleFields["z"] ?? 0))")
-                        
-                        Spacer()
-                    
-                        Text("-50")
-                            .frame(width: 30)
-                        
-                        Slider(value: zBinding, in: -50...50)
-                            .frame(width: 380)
-                        
-                        Text("50")
-                            .frame(width: 30)
-                    }
-                    
-                    Toggle("Interpolate", isOn: interpBinding)
+                switch transformModel.type {
+                case .move:
+                    MoveTransformParameterEditView(transformModel: transformModel)
+                case .orbit:
+                    OrbitTransformParameterEditView(transformModel: transformModel)
                 }
             }
             .navigationTitle("Move")
@@ -186,5 +121,176 @@ struct TransformEditView: View {
         let source = SCNGeometrySource(vertices: [vector1, vector2])
         let element = SCNGeometryElement(indices: indices, primitiveType: .line)
         return SCNGeometry(sources: [source], elements: [element])
+    }
+}
+
+struct OrbitTransformParameterEditView: View {
+    @Bindable var transformModel: TransformModel
+    
+    var body: some View {
+        let heightBinding = Binding {
+            transformModel.doubleFields["height"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["height"] = value
+        }
+        
+        let radiusBinding = Binding {
+            transformModel.doubleFields["radius"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["radius"] = value
+        }
+        
+        let revBinding = Binding {
+            transformModel.doubleFields["rev"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["rev"] = value
+        }
+        
+        let heightModBinding = Binding {
+            transformModel.doubleFields["hMod"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["hMod"] = value
+        }
+        
+        Section("parameters") {
+            HStack {
+                Text("h: \(String(format: "%.1f", transformModel.doubleFields["height"] ?? 0))")
+                
+                Spacer()
+                
+                Text("0")
+                    .frame(width: 30)
+                
+                Slider(value: heightBinding, in: 0...50)
+                    .frame(width: 380)
+                
+                Text("50")
+                    .frame(width: 30)
+            }
+            
+            HStack {
+                Text("r: \(String(format: "%.1f", transformModel.doubleFields["radius"] ?? 0))")
+                
+                Spacer()
+                
+                Text("0")
+                    .frame(width: 30)
+                
+                Slider(value: radiusBinding, in: 0...50)
+                    .frame(width: 380)
+                
+                Text("50")
+                    .frame(width: 30)
+            }
+            
+            HStack {
+                Text("rev: \(String(format: "%.1f", transformModel.doubleFields["rev"] ?? 0))")
+                
+                Spacer()
+            
+                Text("0")
+                    .frame(width: 30)
+                
+                Slider(value: revBinding, in: 0...10, step: 1)
+                    .frame(width: 380)
+                
+                Text("10")
+                    .frame(width: 30)
+            }
+            
+            HStack {
+                Text("hMod: \(String(format: "%.1f", transformModel.doubleFields["hMod"] ?? 0))")
+                
+                Spacer()
+            
+                Text("0")
+                    .frame(width: 30)
+                
+                Slider(value: heightModBinding, in: 0...20)
+                    .frame(width: 380)
+                
+                Text("20")
+                    .frame(width: 30)
+            }
+        }
+    }
+}
+
+struct MoveTransformParameterEditView: View {
+    @Bindable var transformModel: TransformModel
+    
+    var body: some View {
+        let xBinding = Binding {
+            transformModel.doubleFields["x"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["x"] = value
+        }
+        
+        let yBinding = Binding {
+            transformModel.doubleFields["y"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["y"] = value
+        }
+        
+        let zBinding = Binding {
+            transformModel.doubleFields["z"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["z"] = value
+        }
+        
+        let interpBinding = Binding {
+            transformModel.booleanFields["interp"] ?? true
+        } set: { value in
+            transformModel.booleanFields["interp"] = value
+        }
+        
+        Section("parameters") {
+            HStack {
+                Text("x: \(String(format: "%.1f", transformModel.doubleFields["x"] ?? 0))")
+                
+                Spacer()
+                
+                Text("-50")
+                    .frame(width: 30)
+                
+                Slider(value: xBinding, in: -50...50)
+                    .frame(width: 380)
+                
+                Text("50")
+                    .frame(width: 30)
+            }
+            
+            HStack {
+                Text("y: \(String(format: "%.1f", transformModel.doubleFields["y"] ?? 0))")
+                
+                Spacer()
+                
+                Text("0")
+                    .frame(width: 30)
+                
+                Slider(value: yBinding, in: 0...50)
+                    .frame(width: 380)
+                
+                Text("50")
+                    .frame(width: 30)
+            }
+            
+            HStack {
+                Text("z: \(String(format: "%.1f", transformModel.doubleFields["z"] ?? 0))")
+                
+                Spacer()
+            
+                Text("-50")
+                    .frame(width: 30)
+                
+                Slider(value: zBinding, in: -50...50)
+                    .frame(width: 380)
+                
+                Text("50")
+                    .frame(width: 30)
+            }
+            
+            Toggle("Interpolate", isOn: interpBinding)
+        }
     }
 }

@@ -69,14 +69,14 @@ struct TimelineView: View {
                 Divider()
             }
             
-            HStack {
-                Text("New Node")
-                
-                Spacer()
-                
-                Button {
-                    addNewNode()
-                } label: {
+            Button {
+                addNewNode()
+            } label: {
+                HStack {
+                    Text("Add new node")
+                    
+                    Spacer()
+                    
                     Image(systemName: "plus")
                         .font(.headline)
                 }
