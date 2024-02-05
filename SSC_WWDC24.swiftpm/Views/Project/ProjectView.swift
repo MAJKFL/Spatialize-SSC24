@@ -47,7 +47,11 @@ struct ProjectView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: editTransform ? "waveform" : "arrow.triangle.swap") // TODO: Custom 3d arrow symbol
+                    HStack {
+                        Image(systemName: editTransform ? "waveform" : "arrow.triangle.swap")
+                        
+                        Text(editTransform ? "Audio" : "Transform")
+                    }
                 }
             }
             

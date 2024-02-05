@@ -48,6 +48,20 @@ struct TransformEditView: View {
     
     let timer = Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()
     
+    var startPosition: SCNVector3 {
+        let previousTransform = node.transforms
+            .filter { trans in
+                trans.start + trans.length < transformModel.start
+            }
+            .max(by: { $0.start + $0.length < $1.start + $1.length })
+        
+        if let previousTransform {
+            return previousTransform.endPosition
+        } else {
+            return SCNVector3(x: 0, y: 13, z: 0)
+        }
+    }
+    
     var body: some View {
         NavigationView {
             Form {
@@ -70,7 +84,7 @@ struct TransformEditView: View {
                         .onReceive(timer) { publisher in
                             mockPlayheadOffset = (mockPlayheadOffset + (Double(project.bpm) / 60)).truncatingRemainder(dividingBy: transformModel.length)
                             
-                            transformPreviewNode.position = transformModel.getPositionFor(playheadOffset: mockPlayheadOffset, source: SCNVector3(0, 13, 0), mockT: Float(mockPlayheadOffset / transformModel.length))
+                            transformPreviewNode.position = transformModel.getPositionFor(playheadOffset: mockPlayheadOffset, source: startPosition, mockT: Float(mockPlayheadOffset / transformModel.length))
                         }
                     }
                     
@@ -82,9 +96,11 @@ struct TransformEditView: View {
                     MoveTransformParameterEditView(transformModel: transformModel)
                 case .orbit:
                     OrbitTransformParameterEditView(transformModel: transformModel)
+                case .spiral:
+                    SpiralTransformParameterEditView(transformModel: transformModel)
                 }
             }
-            .navigationTitle("Move")
+            .navigationTitle(transformModel.type.displayName)
         }
         .onChange(of: transformModel.doubleFields) { oldValue, newValue in
             updatePathPreview()
@@ -106,7 +122,7 @@ struct TransformEditView: View {
         for i in 0..<100 {
             let node = transformPathPreviewNodes[i]
             
-            let geometry = lineBetween(vector: transformModel.getPositionFor(playheadOffset: 0, source: SCNVector3(0, 13, 0), mockT: Float(i) / 100), toVector: transformModel.getPositionFor(playheadOffset: 0, source: SCNVector3(0, 13, 0), mockT: Float(i + 1) / 100))
+            let geometry = lineBetween(vector: transformModel.getPositionFor(playheadOffset: 0, source: startPosition, mockT: Float(i) / 100), toVector: transformModel.getPositionFor(playheadOffset: 0, source: startPosition, mockT: Float(i + 1) / 100))
             
             let material = SCNMaterial()
             material.diffuse.contents = self.node.uiColor
@@ -121,6 +137,94 @@ struct TransformEditView: View {
         let source = SCNGeometrySource(vertices: [vector1, vector2])
         let element = SCNGeometryElement(indices: indices, primitiveType: .line)
         return SCNGeometry(sources: [source], elements: [element])
+    }
+}
+
+struct SpiralTransformParameterEditView: View {
+    @Bindable var transformModel: TransformModel
+    
+    var body: some View {
+        let startHeightBinding = Binding {
+            transformModel.doubleFields["hStart"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["hStart"] = value
+        }
+        
+        let endHeightBinding = Binding {
+            transformModel.doubleFields["hEnd"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["hEnd"] = value
+        }
+        
+        let revBinding = Binding {
+            transformModel.doubleFields["rev"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["rev"] = value
+        }
+        
+        let baseRadiusBinding = Binding {
+            transformModel.doubleFields["rBase"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["rBase"] = value
+        }
+        
+        Section("parameters") {
+            HStack {
+                Text("hStart: \(String(format: "%.1f", transformModel.doubleFields["hStart"] ?? 0))")
+                
+                Spacer()
+                
+                Text("0")
+                
+                Slider(value: startHeightBinding, in: 0...50)
+                    .frame(width: 380)
+                
+                Text("50")
+                    .frame(width: 30)
+            }
+            
+            HStack {
+                Text("hEnd: \(String(format: "%.1f", transformModel.doubleFields["hEnd"] ?? 0))")
+                
+                Spacer()
+                
+                Text("0")
+                
+                Slider(value: endHeightBinding, in: 0...50)
+                    .frame(width: 380)
+                
+                Text("50")
+                    .frame(width: 30)
+            }
+            
+            HStack {
+                Text("rev: \(String(format: "%.1f", transformModel.doubleFields["rev"] ?? 0))")
+                
+                Spacer()
+            
+                Text("1")
+                
+                Slider(value: revBinding, in: 1...10, step: 1)
+                    .frame(width: 380)
+                
+                Text("10")
+                    .frame(width: 30)
+            }
+            
+            HStack {
+                Text("rBase: \(String(format: "%.1f", transformModel.doubleFields["rBase"] ?? 0))")
+                
+                Spacer()
+            
+                Text("0")
+                
+                Slider(value: baseRadiusBinding, in: 0...50)
+                    .frame(width: 380)
+                
+                Text("50")
+                    .frame(width: 30)
+            }
+        }
     }
 }
 
@@ -159,7 +263,6 @@ struct OrbitTransformParameterEditView: View {
                 Spacer()
                 
                 Text("0")
-                    .frame(width: 30)
                 
                 Slider(value: heightBinding, in: 0...50)
                     .frame(width: 380)
@@ -174,7 +277,6 @@ struct OrbitTransformParameterEditView: View {
                 Spacer()
                 
                 Text("0")
-                    .frame(width: 30)
                 
                 Slider(value: radiusBinding, in: 0...50)
                     .frame(width: 380)
@@ -188,10 +290,9 @@ struct OrbitTransformParameterEditView: View {
                 
                 Spacer()
             
-                Text("0")
-                    .frame(width: 30)
+                Text("1")
                 
-                Slider(value: revBinding, in: 0...10, step: 1)
+                Slider(value: revBinding, in: 1...10, step: 1)
                     .frame(width: 380)
                 
                 Text("10")
@@ -204,7 +305,6 @@ struct OrbitTransformParameterEditView: View {
                 Spacer()
             
                 Text("0")
-                    .frame(width: 30)
                 
                 Slider(value: heightModBinding, in: 0...20)
                     .frame(width: 380)

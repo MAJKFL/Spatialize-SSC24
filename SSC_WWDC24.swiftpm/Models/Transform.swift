@@ -23,7 +23,7 @@ protocol Transform {
 }
 
 enum TransformType: String, CaseIterable, Codable {
-    case move, orbit
+    case move, orbit, spiral
     
     var displayName: String {
         switch self {
@@ -31,6 +31,8 @@ enum TransformType: String, CaseIterable, Codable {
             "Move"
         case .orbit:
             "Orbit"
+        case .spiral:
+            "Spiral"
         }
     }
     
@@ -39,6 +41,8 @@ enum TransformType: String, CaseIterable, Codable {
         case .move:
             "arrow.up.right.circle"
         case .orbit:
+            "globe"
+        case .spiral:
             "arrow.clockwise.circle"
         }
     }
@@ -61,6 +65,8 @@ enum TransformType: String, CaseIterable, Codable {
             - **rev** - Number of revolutions
             - **hMod** - Height modulation
             """
+        case .spiral:
+            "Add description"
         }
     }
 }
@@ -99,6 +105,8 @@ class TransformModel: Transform {
             SCNVector3(doubleFields["x"] ?? 0, doubleFields["y"] ?? 0, doubleFields["z"] ?? 0)
         case .orbit:
             SCNVector3(0, doubleFields["height"] ?? 0, 0)
+        case .spiral:
+            SCNVector3(0, doubleFields["hEnd"] ?? 0, 0)
         }
     }
     
@@ -112,6 +120,8 @@ class TransformModel: Transform {
             booleanFields = ["interp": false]
         case .orbit:
             doubleFields = ["height": 0, "radius": 0, "rev": 1, "hMod": 0]
+        case .spiral:
+            doubleFields = ["hStart": 0, "hEnd": 0, "rev": 1, "rBase": 0]
         }
         
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
@@ -134,7 +144,9 @@ class TransformModel: Transform {
                 return destination
             }
             
-            return SCNVector3(x: (1 - t) * source.x + t * destination.x, y: (1 - t) * source.y + t * destination.y, z: (1 - t) * source.z + t * destination.z)
+            return SCNVector3(x: (1 - t) * source.x + t * destination.x, 
+                              y: (1 - t) * source.y + t * destination.y,
+                              z: (1 - t) * source.z + t * destination.z)
         case .orbit:
             let radius: Float = Float(doubleFields["radius"] ?? 0)
             let heigth: Float = Float(doubleFields["height"] ?? 0)
@@ -144,6 +156,16 @@ class TransformModel: Transform {
             return SCNVector3(x: cos(numberOfRevolutions * t * 2 * .pi - .pi / 2) * radius,
                               y: heigth + sin(t * 10 * .pi - .pi / 2) * heightModulation,
                               z: sin(numberOfRevolutions * t * 2 * .pi - .pi / 2) * radius)
+        case .spiral:
+            let tComp = 1 - t
+            let startHeight: Float = Float(doubleFields["hStart"] ?? 0)
+            let endHeight: Float = Float(doubleFields["hEnd"] ?? 0)
+            let numberOfRevolutions: Float = Float(doubleFields["rev"] ?? 1)
+            let baseRadius: Float = Float(doubleFields["rBase"] ?? 0)
+            
+            return SCNVector3(x: cos(numberOfRevolutions * t * 2 * .pi - .pi / 2) * baseRadius * tComp,
+                              y: startHeight + (endHeight - startHeight) * t,
+                              z: sin(numberOfRevolutions * t * 2 * .pi - .pi / 2) * baseRadius * tComp)
         }
     }
 }
