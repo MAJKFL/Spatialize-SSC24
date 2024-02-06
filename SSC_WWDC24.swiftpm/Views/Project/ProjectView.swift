@@ -72,7 +72,7 @@ struct ProjectView: View {
         .onChange(of: project) { oldValue, newValue in
             playheadManager.pause()
             playheadManager.revert()
-            viewModel.stopEngine()
+            viewModel.pausePlayback()
             playheadManager.project = newValue
             viewModel.updateSpeakerNodePosition(playheadOffset: 0)
         }
@@ -124,9 +124,6 @@ struct ProjectView: View {
             
             Button {
                 playheadManager.toggle()
-                if playheadManager.isPlaying {
-                    viewModel.registerAudioAssets(playheadOffset: playheadManager.offset, bpm: project.bpm)
-                }
             } label: {
                 Label("Play/Pause", systemImage: "play.fill")
             }

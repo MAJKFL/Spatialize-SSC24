@@ -46,7 +46,7 @@ class SpeakerNode: SCNNode {
             .max(by: { $0.start + $0.length < $1.start + $1.length })
         
         if let currentTransform = nodeModel.transforms.first(where: { $0.start <= offset && $0.start + $0.length >= offset }) {
-            position = currentTransform.getPositionFor(playheadOffset: offset, source: previousTransform?.endPosition ?? SCNVector3(0, 13, 0))
+            position = currentTransform.getPositionFor(playheadOffset: offset, currentPosition: position, source: previousTransform?.endPosition ?? SCNVector3(0, 13, 0))
         } else {
             if let previousTransform {
                 position = previousTransform.endPosition

@@ -23,7 +23,7 @@ protocol Transform {
 }
 
 enum TransformType: String, CaseIterable, Codable {
-    case move, orbit, spiral
+    case move, orbit, spiral, random
     
     var displayName: String {
         switch self {
@@ -33,6 +33,8 @@ enum TransformType: String, CaseIterable, Codable {
             "Orbit"
         case .spiral:
             "Spiral"
+        case .random:
+            "Random"
         }
     }
     
@@ -44,6 +46,8 @@ enum TransformType: String, CaseIterable, Codable {
             "globe"
         case .spiral:
             "arrow.clockwise.circle"
+        case .random:
+            "die.face.5"
         }
     }
     
@@ -66,6 +70,8 @@ enum TransformType: String, CaseIterable, Codable {
             - **hMod** - Height modulation
             """
         case .spiral:
+            "Add description"
+        case .random:
             "Add description"
         }
     }
@@ -107,6 +113,8 @@ class TransformModel: Transform {
             SCNVector3(0, doubleFields["height"] ?? 0, 0)
         case .spiral:
             SCNVector3(0, doubleFields["hEnd"] ?? 0, 0)
+        case .random:
+            SCNVector3(0, (doubleFields["radius"] ?? 0) / 2, 0)
         }
     }
     
@@ -122,12 +130,14 @@ class TransformModel: Transform {
             doubleFields = ["height": 0, "radius": 0, "rev": 1, "hMod": 0]
         case .spiral:
             doubleFields = ["hStart": 0, "hEnd": 0, "rev": 1, "rBase": 0]
+        case .random:
+            doubleFields = ["radius": 0, "frequency": 1]
         }
         
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
     }
     
-    func getPositionFor(playheadOffset offset: Double, source: SCNVector3, mockT: Float? = nil) -> SCNVector3 {
+    func getPositionFor(playheadOffset offset: Double, currentPosition: SCNVector3, source: SCNVector3, mockT: Float? = nil) -> SCNVector3 {
         var t: Float
         
         if let mockT {
@@ -166,6 +176,17 @@ class TransformModel: Transform {
             return SCNVector3(x: cos(numberOfRevolutions * t * 2 * .pi - .pi / 2) * baseRadius * tComp,
                               y: startHeight + (endHeight - startHeight) * t,
                               z: sin(numberOfRevolutions * t * 2 * .pi - .pi / 2) * baseRadius * tComp)
+        case .random:
+            let frequency = doubleFields["frequency"] ?? 1
+            let radius: Float = Float(doubleFields["radius"] ?? 0)
+            
+            let periodLength = length / frequency
+            
+            if offset.truncatingRemainder(dividingBy: periodLength) <= 1.5 {
+                return SCNVector3(x: Float.random(in: -radius...radius), y: Float.random(in: 0...(radius / 2)), z: Float.random(in: -radius...radius))
+            } else {
+                return currentPosition
+            }
         }
     }
 }

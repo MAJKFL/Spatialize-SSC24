@@ -44,6 +44,22 @@ struct TransformEditView: View {
         return nodes
     }()
     
+    let radiusBox: SCNNode = {
+        let node = SCNNode()
+        
+        let geometry = SCNBox()
+        
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.secondarySystemBackground.withAlphaComponent(0.15)
+        geometry.materials = [material]
+        node.geometry = geometry
+        node.position = SCNVector3(0, 0, 0)
+        
+        node.isHidden = true
+        
+        return node
+    }()
+    
     @State private var mockPlayheadOffset: Double = 0
     
     let timer = Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()
@@ -66,7 +82,7 @@ struct TransformEditView: View {
         NavigationView {
             Form {
                 Section {
-                    TransformPreviewViewRepresentable(previewNode: transformPreviewNode, pathPreviewNodes: transformPathPreviewNodes)
+                    TransformPreviewViewRepresentable(previewNode: transformPreviewNode, pathPreviewNodes: transformPathPreviewNodes, radiusBox: radiusBox)
                         .frame(height: 300)
                         .listRowInsets(EdgeInsets())
                     
@@ -84,7 +100,7 @@ struct TransformEditView: View {
                         .onReceive(timer) { publisher in
                             mockPlayheadOffset = (mockPlayheadOffset + (Double(project.bpm) / 60)).truncatingRemainder(dividingBy: transformModel.length)
                             
-                            transformPreviewNode.position = transformModel.getPositionFor(playheadOffset: mockPlayheadOffset, source: startPosition, mockT: Float(mockPlayheadOffset / transformModel.length))
+                            transformPreviewNode.position = transformModel.getPositionFor(playheadOffset: mockPlayheadOffset, currentPosition: transformPreviewNode.position, source: startPosition, mockT: Float(mockPlayheadOffset / transformModel.length))
                         }
                     }
                     
@@ -98,6 +114,8 @@ struct TransformEditView: View {
                     OrbitTransformParameterEditView(transformModel: transformModel)
                 case .spiral:
                     SpiralTransformParameterEditView(transformModel: transformModel)
+                case .random:
+                    RandomTransformParameterEditView(transformModel: transformModel)
                 }
             }
             .navigationTitle(transformModel.type.displayName)
@@ -119,16 +137,26 @@ struct TransformEditView: View {
     }
     
     func updatePathPreview() {
-        for i in 0..<100 {
-            let node = transformPathPreviewNodes[i]
+        if transformModel.type != .random {
+            for i in 0..<100 {
+                let node = transformPathPreviewNodes[i]
+                
+                let geometry = lineBetween(vector: transformModel.getPositionFor(playheadOffset: 0, currentPosition: SCNVector3(x: 0, y: 0, z: 0), source: startPosition, mockT: Float(i) / 100), toVector: transformModel.getPositionFor(playheadOffset: 0, currentPosition: SCNVector3(x: 0, y: 0, z: 0), source: startPosition, mockT: Float(i + 1) / 100))
+                
+                let material = SCNMaterial()
+                material.diffuse.contents = self.node.uiColor
+                geometry.materials = [material]
+                
+                node.geometry = geometry
+            }
+        } else {
+            radiusBox.isHidden = false
             
-            let geometry = lineBetween(vector: transformModel.getPositionFor(playheadOffset: 0, source: startPosition, mockT: Float(i) / 100), toVector: transformModel.getPositionFor(playheadOffset: 0, source: startPosition, mockT: Float(i + 1) / 100))
+            radiusBox.position = SCNVector3(x: 0, y: Float(transformModel.doubleFields["radius"] ?? 0) / 2, z: 0)
             
-            let material = SCNMaterial()
-            material.diffuse.contents = self.node.uiColor
-            geometry.materials = [material]
-            
-            node.geometry = geometry
+            (radiusBox.geometry as! SCNBox).length = (transformModel.doubleFields["radius"] ?? 0) * 2
+            (radiusBox.geometry as! SCNBox).width = (transformModel.doubleFields["radius"] ?? 0) * 2
+            (radiusBox.geometry as! SCNBox).height = transformModel.doubleFields["radius"] ?? 0
         }
     }
     
@@ -137,6 +165,54 @@ struct TransformEditView: View {
         let source = SCNGeometrySource(vertices: [vector1, vector2])
         let element = SCNGeometryElement(indices: indices, primitiveType: .line)
         return SCNGeometry(sources: [source], elements: [element])
+    }
+}
+
+struct RandomTransformParameterEditView: View {
+    @Bindable var transformModel: TransformModel
+    
+    var body: some View {
+        let radiusBinding = Binding {
+            transformModel.doubleFields["radius"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["radius"] = value
+        }
+        
+        let frequencyBinding = Binding {
+            transformModel.doubleFields["frequency"] ?? 0
+        } set: { value in
+            transformModel.doubleFields["frequency"] = value
+        }
+        
+        Section("parameters") {
+            HStack {
+                Text("r: \(String(format: "%.1f", transformModel.doubleFields["radius"] ?? 0))")
+                
+                Spacer()
+                
+                Text("10")
+                
+                Slider(value: radiusBinding, in: 10...50)
+                    .frame(width: 380)
+                
+                Text("50")
+                    .frame(width: 30)
+            }
+            
+            HStack {
+                Text("freq: \(String(format: "%.1f", transformModel.doubleFields["frequency"] ?? 0))")
+                
+                Spacer()
+                
+                Text("1")
+                
+                Slider(value: frequencyBinding, in: 1...30, step: 1)
+                    .frame(width: 380)
+                
+                Text("30")
+                    .frame(width: 30)
+            }
+        }
     }
 }
 

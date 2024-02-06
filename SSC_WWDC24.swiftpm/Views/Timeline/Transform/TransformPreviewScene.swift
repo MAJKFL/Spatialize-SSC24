@@ -10,7 +10,7 @@ import SceneKit
 class TransformPreviewScene: SCNScene {
     var mainNode: SCNNode!
     
-    func create(previewNode: SCNNode, pathPreviewNodes: [SCNNode]) {
+    func create(previewNode: SCNNode, pathPreviewNodes: [SCNNode], radiusBox: SCNNode) {
         background.contents = UIColor.black
         
         mainNode = SCNNode()
@@ -21,6 +21,8 @@ class TransformPreviewScene: SCNScene {
         for node in pathPreviewNodes {
             mainNode.addChildNode(node)
         }
+        
+        mainNode.addChildNode(radiusBox)
         
         createListenerRepresentation()
         createPlane()
