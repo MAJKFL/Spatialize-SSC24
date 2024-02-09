@@ -17,7 +17,7 @@ class EditorViewModel: ObservableObject {
     private let listener: PHASEListener
     private let spatialMixerDefinition: PHASESpatialMixerDefinition
     
-    private var registeredAssetIDs = [String]()
+    private var eventIDs = [String]()
     private var hasBeenPlayed = [String]()
     
     init(playheadManager: PlayheadManager) {
@@ -41,14 +41,16 @@ class EditorViewModel: ObservableObject {
         distanceModelParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 80)
         distanceModelParameters.rolloffFactor = 0.8
         spatialMixerDefinition.distanceModelParameters = distanceModelParameters
+        
+        try! phaseEngine.start()
     }
     
     func setSpeakerNodes(for nodes: [Node]) {
-        speakerNodes.removeAll(where: { speakerNode in
-            !nodes.contains(where: { node in
-                node.id.uuidString == speakerNode.name
-            })
-        })
+        for speakerNode in speakerNodes {
+            if !nodes.contains(where: { $0.id == speakerNode.nodeModel.id }) {
+                speakerNodes.removeAll(where: { $0.nodeModel.id == speakerNode.nodeModel.id })
+            }
+        }
         
         for node in nodes {
             guard !speakerNodes.contains(where: { $0.name == node.id.uuidString }) else { continue }
@@ -57,9 +59,6 @@ class EditorViewModel: ObservableObject {
             source.transform = matrix_identity_float4x4
             try! phaseEngine.rootObject.addChild(source)
             let sphereNode = SpeakerNode(nodeModel: node, phaseEngine: phaseEngine, phaseSource: source)
-            
-            let group = PHASEGroup(identifier: node.id.uuidString)
-            group.register(engine: phaseEngine)
             
             speakerNodes.append(sphereNode)
         }
@@ -71,9 +70,9 @@ class EditorViewModel: ObservableObject {
     
     func updateSpeakerNodePosition(playheadOffset offset: Double) {
         for speakerNode in speakerNodes {
-            speakerNode.updatePosition(playheadOffset: offset)
+            speakerNode.updatePosition(playheadOffset: offset, nodePosition: speakerNode.nodeModel.position)
             
-            phaseEngine.groups[speakerNode.nodeModel.id.uuidString]?.gain = speakerNode.nodeModel.isPlaying ? speakerNode.nodeModel.volume : 0
+            speakerNode.phaseSource.gain = speakerNode.nodeModel.isPlaying ? speakerNode.nodeModel.volume : 0
             
             guard playheadManager.isPlaying else { continue }
             
@@ -93,71 +92,64 @@ class EditorViewModel: ObservableObject {
         }
     }
     
-    /// Registering all audio assets, should be run once when resuming playback
-    func registerAudioAssets(playheadOffset offset: Double, bpm: Int) {
-        for id in registeredAssetIDs {
-            if id.contains("event") {
-                let soundEvent = try? PHASESoundEvent(engine: phaseEngine, assetIdentifier: id)
-                soundEvent?.stopAndInvalidate()
+    func registerTracks(_ tracks: [Track]) {
+        for track in tracks {
+            guard !eventIDs.contains(track.id.uuidString + "-event") else { continue }
+            
+            do {
+                let url = track.fileURL
+                
+                let _ = try phaseEngine.assetRegistry.registerSoundAsset(url: url, identifier: track.id.uuidString, assetType: .streamed, channelLayout: .init(layoutTag: kAudioChannelLayoutTag_Stereo), normalizationMode: .dynamic)
+                
+                let samplerNodeDefinition = PHASESamplerNodeDefinition(soundAssetIdentifier: track.id.uuidString, mixerDefinition: spatialMixerDefinition)
+                samplerNodeDefinition.playbackMode = .oneShot
+                samplerNodeDefinition.setCalibrationMode(calibrationMode: .relativeSpl, level: 0)
+                samplerNodeDefinition.cullOption = .sleepWakeAtRealtimeOffset
+                
+                let id = track.id.uuidString + "-event"
+                let _ = try phaseEngine.assetRegistry.registerSoundEventAsset(rootNode: samplerNodeDefinition, identifier: id)
+                
+                eventIDs.append(id)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+    }
+    
+    func startOrResumePlayback(atOffset offset: Double, bpm: Int, shouldSeek: Bool) {
+        if shouldSeek {
+            hasBeenPlayed = [String]()
+            
+            phaseEngine.soundEvents.forEach { event in
+                event.stopAndInvalidate()
             }
             
-            phaseEngine.assetRegistry.unregisterAsset(identifier: id, completion: nil)
-        }
-        
-        registeredAssetIDs = [String]()
-        hasBeenPlayed = [String]()
-        
-        for node in speakerNodes.compactMap({ $0.nodeModel }) {
-            for track in node.tracks {
-                let width = Constants.trackWidth(track, bpm: bpm)
-                guard offset <= track.start + width else { continue }
+            for speakerNode in speakerNodes {
+                speakerNode.updatePosition(playheadOffset: offset, nodePosition: speakerNode.nodeModel.position)
                 
-                do {
-                    let url = track.fileURL
+                if let currentTrack = speakerNode.nodeModel.tracks.first(where: { $0.start <= offset && $0.start + Constants.trackWidth($0, bpm: bpm) >= offset }) {
+                    let id = currentTrack.id.uuidString + "-event"
                     
-                    let _ = try phaseEngine.assetRegistry.registerSoundAsset(url: url, identifier: track.id.uuidString, assetType: .streamed, channelLayout: .init(layoutTag: kAudioChannelLayoutTag_Stereo), normalizationMode: .dynamic)
+                    let mixerParameters = PHASEMixerParameters()
+                    mixerParameters.addSpatialMixerParameters(identifier: spatialMixerDefinition.identifier, source: speakerNode.phaseSource, listener: listener)
                     
-                    let samplerNodeDefinition = PHASESamplerNodeDefinition(soundAssetIdentifier: track.id.uuidString, mixerDefinition: spatialMixerDefinition)
-                    samplerNodeDefinition.playbackMode = .oneShot
-                    samplerNodeDefinition.setCalibrationMode(calibrationMode: .relativeSpl, level: 0)
-                    samplerNodeDefinition.cullOption = .sleepWakeAtRealtimeOffset
-                    
-                    samplerNodeDefinition.group = phaseEngine.groups[node.id.uuidString]
-                    
-                    let id = track.id.uuidString + "-event"
-                    let _ = try phaseEngine.assetRegistry.registerSoundEventAsset(rootNode: samplerNodeDefinition, identifier: id)
-                    
-                    registeredAssetIDs.append(track.id.uuidString)
-                    registeredAssetIDs.append(id)
-                } catch {
-                    print(error.localizedDescription)
+                    let soundEvent = try! PHASESoundEvent(engine: phaseEngine, assetIdentifier: id, mixerParameters: mixerParameters)
+                    soundEvent.seek(to: currentTrack.trackLength * ((offset - currentTrack.start) / Constants.trackWidth(currentTrack, bpm: bpm)))
+                    soundEvent.start()
+                    hasBeenPlayed.append(id)
                 }
             }
-        }
-    }
-    
-    func startEngine(atOffset offset: Double, bpm: Int) {
-        try! phaseEngine.start()
-        
-        for speakerNode in speakerNodes {
-            speakerNode.updatePosition(playheadOffset: offset)
-            
-            if let currentTrack = speakerNode.nodeModel.tracks.first(where: { $0.start <= offset && $0.start + Constants.trackWidth($0, bpm: bpm) >= offset }) {
-                let id = currentTrack.id.uuidString + "-event"
-                
-                let mixerParameters = PHASEMixerParameters()
-                mixerParameters.addSpatialMixerParameters(identifier: spatialMixerDefinition.identifier, source: speakerNode.phaseSource, listener: listener)
-                
-                let soundEvent = try! PHASESoundEvent(engine: phaseEngine, assetIdentifier: id, mixerParameters: mixerParameters)
-                soundEvent.seek(to: currentTrack.trackLength * ((offset - currentTrack.start) / Constants.trackWidth(currentTrack, bpm: bpm)))
-                soundEvent.start()
-                hasBeenPlayed.append(id)
+        } else {
+            phaseEngine.soundEvents.forEach { event in
+                event.resume()
             }
         }
     }
     
-    func stopEngine() {
-        phaseEngine.stop()
+    func pausePlayback() {
+        phaseEngine.soundEvents.forEach { event in
+            event.pause()
+        }
     }
 }
 

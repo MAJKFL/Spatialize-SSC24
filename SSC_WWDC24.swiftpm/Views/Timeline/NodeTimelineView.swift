@@ -10,6 +10,7 @@ import AVFoundation
 import SceneKit
 
 struct NodeTimelineView: View {
+    @Environment(\.modelContext) var context
     @Bindable var project: Project
     @Bindable var node: Node
     
@@ -48,7 +49,6 @@ struct NodeTimelineView: View {
                         }
                         .disabled(editTransform)
                     
-                    
                     Spacer()
                 }
             }
@@ -82,7 +82,10 @@ struct NodeTimelineView: View {
     private func handleTransformDrop(_ transfer: TransformTransfer, at location: CGPoint) {
         let transform = TransformModel(transfer: transfer)
         
-        if let otherNode = project.nodes.first(where: { $0.transforms.contains(where: { $0.id == transform.id }) }) {
+        if let otherNode = project.nodes.first(where: { $0.transforms.contains(where: { $0.id == transform.id }) }),
+           let originalTransform = otherNode.transforms.first(where: { $0.id == transfer.id }) {
+            context.delete(originalTransform)
+            
             otherNode.transforms.removeAll(where: { $0.id == transform.id })
         }
         

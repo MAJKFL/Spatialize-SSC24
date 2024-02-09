@@ -28,6 +28,21 @@ struct TimelineView: View {
         }
     }
     
+    let colors = [
+        UIColor(#colorLiteral(red: 0, green: 0.631, blue: 0.847, alpha: 1)),
+        UIColor(#colorLiteral(red: 0.004, green: 0.38, blue: 0.996, alpha: 1)),
+        UIColor(#colorLiteral(red: 0.298, green: 0.133, blue: 0.698, alpha: 1)),
+        UIColor(#colorLiteral(red: 0.596, green: 0.165, blue: 0.741, alpha: 1)),
+        UIColor(#colorLiteral(red: 0.725, green: 0.176, blue: 0.365, alpha: 1)),
+        UIColor(#colorLiteral(red: 1, green: 0.251, blue: 0.078, alpha: 1)),
+        UIColor(#colorLiteral(red: 1, green: 0.416, blue: 0, alpha: 1)),
+        UIColor(#colorLiteral(red: 1, green: 0.671, blue: 0, alpha: 1)),
+        UIColor(#colorLiteral(red: 0.996, green: 0.78, blue: 0.02, alpha: 1)),
+        UIColor(#colorLiteral(red: 1, green: 0.984, blue: 0.259, alpha: 1)),
+        UIColor(#colorLiteral(red: 0.855, green: 0.925, blue: 0.216, alpha: 1)),
+        UIColor(#colorLiteral(red: 0.467, green: 0.733, blue: 0.255, alpha: 1))
+    ]
+    
     var body: some View {
         ScrollView {
             ZStack(alignment: .leading) {
@@ -69,14 +84,14 @@ struct TimelineView: View {
                 Divider()
             }
             
-            HStack {
-                Text("New Node")
-                
-                Spacer()
-                
-                Button {
-                    addNewNode()
-                } label: {
+            Button {
+                addNewNode()
+            } label: {
+                HStack {
+                    Text("Add new node")
+                    
+                    Spacer()
+                    
                     Image(systemName: "plus")
                         .font(.headline)
                 }
@@ -172,9 +187,9 @@ struct TimelineView: View {
         
         let currentPosition = project.nodes
             .map { $0.position }
-            .max() ?? 0
+            .max() ?? -1
         
-        project.nodes.append(Node(position: currentPosition + 1, name: "New Node\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: UIColor(named: "NewNodeColor")!))
+        project.nodes.append(Node(position: currentPosition + 1, name: "New Node\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: colors[(currentPosition + 1) % colors.count]))
         project.nodes.sort(by: { $0.position < $1.position })
     }
 }

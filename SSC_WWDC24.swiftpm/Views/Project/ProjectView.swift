@@ -47,7 +47,11 @@ struct ProjectView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: editTransform ? "waveform" : "arrow.triangle.swap") // TODO: Custom 3d arrow symbol
+                    HStack {
+                        Image(systemName: editTransform ? "waveform" : "arrow.triangle.swap")
+                        
+                        Text(editTransform ? "Audio" : "Transform")
+                    }
                 }
             }
             
@@ -68,7 +72,7 @@ struct ProjectView: View {
         .onChange(of: project) { oldValue, newValue in
             playheadManager.pause()
             playheadManager.revert()
-            viewModel.stopEngine()
+            viewModel.pausePlayback()
             playheadManager.project = newValue
             viewModel.updateSpeakerNodePosition(playheadOffset: 0)
         }
@@ -120,13 +124,11 @@ struct ProjectView: View {
             
             Button {
                 playheadManager.toggle()
-                if playheadManager.isPlaying {
-                    viewModel.registerAudioAssets(playheadOffset: playheadManager.offset, bpm: project.bpm)
-                }
             } label: {
                 Label("Play/Pause", systemImage: "play.fill")
             }
-            .tint(playheadManager.isPlaying ? .green : .accentColor)
+            .buttonStyle(.plain)
+            .foregroundStyle(playheadManager.isPlaying ? .green : .accentColor)
         }
     }
 }

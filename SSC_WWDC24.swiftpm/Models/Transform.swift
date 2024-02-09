@@ -10,6 +10,7 @@ import SwiftData
 import CoreTransferable
 import UniformTypeIdentifiers
 import SceneKit
+import SwiftUI
 
 protocol Transform {
     var id: UUID { get set }
@@ -22,7 +23,7 @@ protocol Transform {
 }
 
 enum TransformType: String, CaseIterable, Codable {
-    case move, orbit
+    case move, orbit, spiral, random
     
     var displayName: String {
         switch self {
@@ -30,6 +31,10 @@ enum TransformType: String, CaseIterable, Codable {
             "Move"
         case .orbit:
             "Orbit"
+        case .spiral:
+            "Spiral"
+        case .random:
+            "Random"
         }
     }
     
@@ -38,7 +43,48 @@ enum TransformType: String, CaseIterable, Codable {
         case .move:
             "arrow.up.right.circle"
         case .orbit:
+            "globe"
+        case .spiral:
             "arrow.clockwise.circle"
+        case .random:
+            "die.face.5"
+        }
+    }
+    
+    var displayDescription: LocalizedStringKey {
+        switch self {
+        case .move:
+            """
+            This transform moves the node to the specified coordinates.
+            Parameters:
+            - **x**, **y**, **z** - Destination point components
+            - **Interpolate** - Indicate whether to linearly interpolate between source and destination
+            """
+        case .orbit:
+            """
+            This transform moves the node circularly around the origin.
+            Parameters:
+            - **h** - Base height of the node
+            - **r** - Radius of the orbit
+            - **rev** - Number of revolutions
+            - **hMod** - Height modulation
+            """
+        case .spiral:
+            """
+            This transform moves the node circularly around the origin, towards the end point, with smaller radius over time.
+            Parameters:
+            - **hStart** - Starting height of the node
+            - **hEnd** - Finish height of the node
+            - **rev** - Number of revolutions
+            - **rBase** - Initial radius of a revolution
+            """
+        case .random:
+            """
+            This transform moves the node to random points withing the specified cube radius.
+            Parameters:
+            - **r** - Radius of the cube
+            - **freq** - How many times should transform randomly change the node's position
+            """
         }
     }
 }
@@ -76,7 +122,11 @@ class TransformModel: Transform {
         case .move:
             SCNVector3(doubleFields["x"] ?? 0, doubleFields["y"] ?? 0, doubleFields["z"] ?? 0)
         case .orbit:
-            SCNVector3(doubleFields["radius"] ?? 0, doubleFields["height"] ?? 0, 0)
+            SCNVector3(0, doubleFields["height"] ?? 0, 0)
+        case .spiral:
+            SCNVector3(0, doubleFields["hEnd"] ?? 0, 0)
+        case .random:
+            SCNVector3(0, (doubleFields["radius"] ?? 0) / 2, 0)
         }
     }
     
@@ -86,17 +136,27 @@ class TransformModel: Transform {
         
         switch type {
         case .move:
-            doubleFields = ["x": 0, "y": 0, "z": 0]
-            booleanFields = ["interp": false]
+            doubleFields = ["x": 0, "y": 20, "z": 0]
+            booleanFields = ["interp": true]
         case .orbit:
-            doubleFields = ["height": 0, "radius": 0, "no.ofRev": 1, "heightMod": 0]
+            doubleFields = ["height": 30, "radius": 25, "rev": 1, "hMod": 0]
+        case .spiral:
+            doubleFields = ["hStart": 10, "hEnd": 40, "rev": 3, "rBase": 40]
+        case .random:
+            doubleFields = ["radius": 30, "frequency": 6]
         }
         
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
     }
     
-    func getPositionFor(playheadOffset offset: Double, source: SCNVector3) -> SCNVector3 {
-        let t = Float((offset - start) / length)
+    func getPositionFor(playheadOffset offset: Double, currentPosition: SCNVector3, source: SCNVector3, mockT: Float? = nil) -> SCNVector3 {
+        var t: Float
+        
+        if let mockT {
+            t = mockT
+        } else {
+            t = Float((offset - start) / length)
+        }
         
         switch type {
         case .move:
@@ -106,16 +166,45 @@ class TransformModel: Transform {
                 return destination
             }
             
-            return SCNVector3(x: (1 - t) * source.x + t * destination.x, y: (1 - t) * source.y + t * destination.y, z: (1 - t) * source.z + t * destination.z)
+            return SCNVector3(x: (1 - t) * source.x + t * destination.x,
+                              y: (1 - t) * source.y + t * destination.y,
+                              z: (1 - t) * source.z + t * destination.z)
         case .orbit:
             let radius: Float = Float(doubleFields["radius"] ?? 0)
             let heigth: Float = Float(doubleFields["height"] ?? 0)
-            let numberOfRevolutions: Float = Float(doubleFields["no.ofRev"] ?? 1)
-            let heightModulation: Float = Float(doubleFields["heightMod"] ?? 0)
+            let numberOfRevolutions: Float = Float(doubleFields["rev"] ?? 1)
+            let heightModulation: Float = Float(doubleFields["hMod"] ?? 0)
             
-            return SCNVector3(x: cos(numberOfRevolutions * t * 2 * .pi) * radius,
-                              y: heigth + sin(t * 10 * .pi) * heightModulation,
-                              z: sin(numberOfRevolutions * t * 2 * .pi) * radius)
+            return SCNVector3(x: cos(numberOfRevolutions * t * 2 * .pi - .pi / 2) * radius,
+                              y: heigth + sin(t * 10 * .pi - .pi / 2) * heightModulation,
+                              z: sin(numberOfRevolutions * t * 2 * .pi - .pi / 2) * radius)
+        case .spiral:
+            let tComp = 1 - t
+            let startHeight: Float = Float(doubleFields["hStart"] ?? 0)
+            let endHeight: Float = Float(doubleFields["hEnd"] ?? 0)
+            let numberOfRevolutions: Float = Float(doubleFields["rev"] ?? 1)
+            let baseRadius: Float = Float(doubleFields["rBase"] ?? 0)
+            
+            return SCNVector3(x: cos(numberOfRevolutions * t * 2 * .pi - .pi / 2) * baseRadius * tComp,
+                              y: startHeight + (endHeight - startHeight) * t,
+                              z: sin(numberOfRevolutions * t * 2 * .pi - .pi / 2) * baseRadius * tComp)
+        case .random:
+            let frequency = doubleFields["frequency"] ?? 1
+            let radius: Float = Float(doubleFields["radius"] ?? 0)
+            
+            let periodLength = length / frequency
+            
+            if offset.truncatingRemainder(dividingBy: periodLength) <= 1.5 {
+                var result = SCNVector3(x: Float.random(in: -radius...radius), y: Float.random(in: 0...(radius / 2)), z: Float.random(in: -radius...radius))
+                
+                while simd_distance(simd_float3(result), simd_float3(SCNVector3(0, 4.5, 0))) < 8 {
+                    result = SCNVector3(x: Float.random(in: -radius...radius), y: Float.random(in: 0...(radius / 2)), z: Float.random(in: -radius...radius))
+                }
+                
+                return result
+            } else {
+                return currentPosition
+            }
         }
     }
 }
