@@ -29,16 +29,20 @@ class SpeakerNode: SCNNode {
         spherePhysicsBody.isAffectedByGravity = false
         
         self.name = nodeModel.id.uuidString
-        self.position = SCNVector3(0, 4.5, 0)
         self.geometry = sphereGeometry
         self.physicsBody = spherePhysicsBody
+        
+        let x: Float = cos(.pi * Float(nodeModel.position) / 5)
+        let z: Float = sin(.pi * Float(nodeModel.position) / 5)
+        
+        self.position = SCNVector3(x, 13, z)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func updatePosition(playheadOffset offset: Double) {
+    func updatePosition(playheadOffset offset: Double, nodePosition: Int) {
         let previousTransform = nodeModel.transforms
             .filter { trans in
                 trans.start + trans.length < offset
@@ -51,14 +55,13 @@ class SpeakerNode: SCNNode {
             if let previousTransform {
                 position = previousTransform.endPosition
             } else {
-                position = SCNVector3(0, 13, 0)
+                let x: Float = cos(.pi * Float(nodePosition) / 5)
+                let z: Float = sin(.pi * Float(nodePosition) / 5)
+                
+                position = SCNVector3(x, 13, z)
             }
         }
         
         phaseSource.transform.columns.3 = simd_make_float4(position.x, position.y, position.z, 1.0)
-    }
-    
-    deinit {
-        phaseEngine.rootObject.removeChild(phaseSource)
     }
 }

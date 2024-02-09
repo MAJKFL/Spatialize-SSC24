@@ -48,7 +48,6 @@ class EditorViewModel: ObservableObject {
     func setSpeakerNodes(for nodes: [Node]) {
         for speakerNode in speakerNodes {
             if !nodes.contains(where: { $0.id == speakerNode.nodeModel.id }) {
-                phaseEngine.rootObject.removeChild(speakerNode.phaseSource)
                 speakerNodes.removeAll(where: { $0.nodeModel.id == speakerNode.nodeModel.id })
             }
         }
@@ -71,7 +70,7 @@ class EditorViewModel: ObservableObject {
     
     func updateSpeakerNodePosition(playheadOffset offset: Double) {
         for speakerNode in speakerNodes {
-            speakerNode.updatePosition(playheadOffset: offset)
+            speakerNode.updatePosition(playheadOffset: offset, nodePosition: speakerNode.nodeModel.position)
             
             speakerNode.phaseSource.gain = speakerNode.nodeModel.isPlaying ? speakerNode.nodeModel.volume : 0
             
@@ -126,7 +125,7 @@ class EditorViewModel: ObservableObject {
             }
             
             for speakerNode in speakerNodes {
-                speakerNode.updatePosition(playheadOffset: offset)
+                speakerNode.updatePosition(playheadOffset: offset, nodePosition: speakerNode.nodeModel.position)
                 
                 if let currentTrack = speakerNode.nodeModel.tracks.first(where: { $0.start <= offset && $0.start + Constants.trackWidth($0, bpm: bpm) >= offset }) {
                     let id = currentTrack.id.uuidString + "-event"

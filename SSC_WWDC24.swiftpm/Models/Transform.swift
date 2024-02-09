@@ -70,9 +70,21 @@ enum TransformType: String, CaseIterable, Codable {
             - **hMod** - Height modulation
             """
         case .spiral:
-            "Add description"
+            """
+            This transform moves the node circularly around the origin, towards the end point, with smaller radius over time.
+            Parameters:
+            - **hStart** - Starting height of the node
+            - **hEnd** - Finish height of the node
+            - **rev** - Number of revolutions
+            - **rBase** - Initial radius of a revolution
+            """
         case .random:
-            "Add description"
+            """
+            This transform moves the node to random points withing the specified cube radius.
+            Parameters:
+            - **r** - Radius of the cube
+            - **freq** - How many times should transform randomly change the node's position
+            """
         }
     }
 }
@@ -124,14 +136,14 @@ class TransformModel: Transform {
         
         switch type {
         case .move:
-            doubleFields = ["x": 0, "y": 0, "z": 0]
-            booleanFields = ["interp": false]
+            doubleFields = ["x": 0, "y": 20, "z": 0]
+            booleanFields = ["interp": true]
         case .orbit:
-            doubleFields = ["height": 0, "radius": 0, "rev": 1, "hMod": 0]
+            doubleFields = ["height": 30, "radius": 25, "rev": 1, "hMod": 0]
         case .spiral:
-            doubleFields = ["hStart": 0, "hEnd": 0, "rev": 1, "rBase": 0]
+            doubleFields = ["hStart": 10, "hEnd": 40, "rev": 3, "rBase": 40]
         case .random:
-            doubleFields = ["radius": 0, "frequency": 1]
+            doubleFields = ["radius": 30, "frequency": 6]
         }
         
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
@@ -154,7 +166,7 @@ class TransformModel: Transform {
                 return destination
             }
             
-            return SCNVector3(x: (1 - t) * source.x + t * destination.x, 
+            return SCNVector3(x: (1 - t) * source.x + t * destination.x,
                               y: (1 - t) * source.y + t * destination.y,
                               z: (1 - t) * source.z + t * destination.z)
         case .orbit:
@@ -183,7 +195,13 @@ class TransformModel: Transform {
             let periodLength = length / frequency
             
             if offset.truncatingRemainder(dividingBy: periodLength) <= 1.5 {
-                return SCNVector3(x: Float.random(in: -radius...radius), y: Float.random(in: 0...(radius / 2)), z: Float.random(in: -radius...radius))
+                var result = SCNVector3(x: Float.random(in: -radius...radius), y: Float.random(in: 0...(radius / 2)), z: Float.random(in: -radius...radius))
+                
+                while simd_distance(simd_float3(result), simd_float3(SCNVector3(0, 4.5, 0))) < 8 {
+                    result = SCNVector3(x: Float.random(in: -radius...radius), y: Float.random(in: 0...(radius / 2)), z: Float.random(in: -radius...radius))
+                }
+                
+                return result
             } else {
                 return currentPosition
             }

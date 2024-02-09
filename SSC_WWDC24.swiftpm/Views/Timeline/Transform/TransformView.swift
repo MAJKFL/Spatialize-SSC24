@@ -39,7 +39,7 @@ struct TransformView: View {
                         HStack {
                             Text("\(key):")
                             
-                            Text(String(format: "%.1f", value))
+                            Text(String(format: "%.0f", value))
                             
                             Spacer()
                         }
