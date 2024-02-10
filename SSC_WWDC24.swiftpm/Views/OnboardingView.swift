@@ -56,7 +56,7 @@ struct OnboardingView: View {
                     }
                     
                     HStack(spacing: 20) {
-                        Image(systemName: "airpodspro")
+                        Image(systemName: "headphones")
                             .font(.largeTitle)
                             .scaledToFit()
                             .foregroundStyle(.blue)
@@ -66,7 +66,7 @@ struct OnboardingView: View {
                             Text("Output")
                                 .font(.headline)
                             
-                            Text("For the best results consider using earphones that support spatial audio like e.g. AirPods pro. Though the app will still work as long as your device's speakers support spatial audio.")
+                            Text("For the best results consider using earphones that support spatial audio like e.g. AirPods pro. Though, the app will still work as long as your device's speakers support spatial audio.")
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -125,7 +125,7 @@ struct OnboardingView: View {
                     }
                     
                     VStack(alignment: .leading) {
-                        Text("Creating")
+                        Text("Creating/Editing")
                             .font(.title2)
                         
                         // Video
@@ -134,20 +134,6 @@ struct OnboardingView: View {
                             .frame(maxWidth: .infinity, minHeight: 200)
                         
                         Text("Use timeline's left bar to manage speaker nodes")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text("Editing")
-                            .font(.title2)
-                        
-                        // Video
-                        Rectangle()
-                            .fill(.gray)
-                            .frame(maxWidth: .infinity, minHeight: 200)
-                        
-                        Text("Press the \"i\" symbol next to a node to edit it's parameters. Additionaly, you can silence or listen solo to a track by tapping buttons to the left of it's name.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -175,11 +161,11 @@ struct OnboardingView: View {
                 VStack(spacing: 30) {
                     HStack {
                         VStack(alignment: .leading) {
-                            Text("Tracks")
+                            Text("Audio files")
                                 .font(.largeTitle)
                                 .bold()
                             
-                            Text("Represent audio files on the timeline.")
+                            Text("Represent audio on the timeline.")
                                 .font(.headline)
                                 .foregroundStyle(.secondary)
                         }
@@ -196,7 +182,7 @@ struct OnboardingView: View {
                             .fill(.gray)
                             .frame(maxWidth: .infinity, minHeight: 200)
                         
-                        Text("Drag your audio files onto the timeline part related to the speaker node of your choosing to create a new track.")
+                        Text("Drag your audio files onto the timeline part related to the speaker node of your choosing.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -210,7 +196,7 @@ struct OnboardingView: View {
                             .fill(.gray)
                             .frame(maxWidth: .infinity, minHeight: 200)
                         
-                        Text("You can freely drag and drop imported tracks around the timeline. To delete a track, simply tap it and press \"delete\".")
+                        Text("You can freely drag and drop imported audio files around the timeline. To delete one, long-press it and tap \"delete\".")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }

@@ -48,8 +48,20 @@ struct TimelineView: View {
             ZStack(alignment: .leading) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack(alignment: .top) {
-                        beatMarkers()
-                            .padding(.leading, 250)
+                        HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
+                            ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
+                                VStack {
+                                    Rectangle()
+                                        .fill(.gray.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.3))
+                                        .frame(width: 1)
+                                }
+                                .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
+                            }
+                            
+                            Spacer()
+                        }
+                        .padding(.leading, Constants.timelineLeadingPaddingFor(timeSignature: project.timeSignature))
+                        .padding(.leading, 250)
                         
                         tracks()
                             .padding(.leading, 250)
@@ -95,7 +107,7 @@ struct TimelineView: View {
                 addNewNode()
             } label: {
                 HStack {
-                    Text("Add new node")
+                    Text("Add new speaker")
                     
                     Spacer()
                     
@@ -149,22 +161,6 @@ struct TimelineView: View {
         }
     }
     
-    func beatMarkers() -> some View {
-        HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
-            ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
-                VStack {
-                    Rectangle()
-                        .fill(.gray.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.3))
-                        .frame(width: 1)
-                }
-                .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
-            }
-            
-            Spacer()
-        }
-        .padding(.leading, Constants.timelineLeadingPaddingFor(timeSignature: project.timeSignature))
-    }
-    
     func tracks() -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
@@ -205,20 +201,20 @@ struct TimelineView: View {
     func addNewNode() {
         let number = project.nodes
             .map { $0.name }
-            .filter { $0.contains("New Node") }
-            .map { Int($0.replacingOccurrences(of: "New Node ", with: "")) ?? 0 }
+            .filter { $0.contains("New Speaker") }
+            .map { Int($0.replacingOccurrences(of: "New Speaker ", with: "")) ?? 0 }
             .max() ?? 0
         
         let defaultNodeNameCount = project.nodes
             .map { $0.name }
-            .filter { $0.contains("New Node") }
+            .filter { $0.contains("New Speaker") }
             .count
         
         let currentPosition = project.nodes
             .map { $0.position }
             .max() ?? -1
         
-        project.nodes.append(Node(position: currentPosition + 1, name: "New Node\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: colors[(currentPosition + 1) % colors.count]))
+        project.nodes.append(Node(position: currentPosition + 1, name: "New Speaker\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: colors[(currentPosition + 1) % colors.count]))
         project.nodes.sort(by: { $0.position < $1.position })
     }
 }

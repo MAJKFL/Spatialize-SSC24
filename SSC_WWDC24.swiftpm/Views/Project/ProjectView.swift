@@ -87,6 +87,7 @@ struct ProjectView: View {
                     HStack(spacing: 0) {
                         ForEach(TransformType.allCases, id: \.self) { type in
                             TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)
+                                .shadow(radius: 7)
                                 .padding()
                         }
                     }

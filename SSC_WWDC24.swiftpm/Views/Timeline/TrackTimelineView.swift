@@ -14,7 +14,6 @@ struct TrackTimelineView: View {
     @Bindable var node: Node
     @Bindable var track: Track
     
-    @State private var showPopover = false
     @State private var waveformImage: Image?
     
     var isObstructed: Bool {
@@ -72,11 +71,8 @@ struct TrackTimelineView: View {
                 await loadImage()
             }
         }
-        .onTapGesture {
-            showPopover = true
-        }
-        .popover(isPresented: $showPopover, arrowEdge: .top) {
-            Button {
+        .contextMenu {
+            Button(role: .destructive) {
                 withAnimation(.easeIn(duration: 0.1)) {
                     node.tracks.removeAll(where: { $0.id == track.id })
                     context.delete(track)
@@ -89,7 +85,6 @@ struct TrackTimelineView: View {
             } label: {
                 Text("Delete")
             }
-            .tint(.red)
         }
     }
     
