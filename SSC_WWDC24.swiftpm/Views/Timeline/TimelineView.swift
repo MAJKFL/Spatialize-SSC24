@@ -66,7 +66,7 @@ struct TimelineView: View {
                     .background(.thickMaterial)
                     .padding(.top, 40)
             }
-            .frame(minHeight: 320)
+            .frame(minHeight: 380)
         }
         .ignoresSafeArea()
         .onChange(of: playheadManager.offset) { oldValue, newValue in
