@@ -32,7 +32,7 @@ struct ProjectView: View {
             }
             
             TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
-                .frame(height: 280)
+                .frame(height: 350)
         }
         .toolbarRole(.editor)
         .navigationTitle(project.name)
@@ -83,7 +83,7 @@ struct ProjectView: View {
             Spacer()
             
             if editTransform {
-                ScrollView(.horizontal) {
+                ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 0) {
                         ForEach(TransformType.allCases, id: \.self) { type in
                             TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)

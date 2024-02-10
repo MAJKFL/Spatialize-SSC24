@@ -17,7 +17,6 @@ class Track: Identifiable {
     var ext: String
     var start: Double = 0
     var trackLength: Double = 0
-    var imageData: Data?
     
     
     init(id: UUID = UUID(), fileName: String, ext: String, trackLength: Double = 0, start: Double = 0) {

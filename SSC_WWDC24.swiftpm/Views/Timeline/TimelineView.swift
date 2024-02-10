@@ -47,21 +47,24 @@ struct TimelineView: View {
         ScrollView {
             ZStack(alignment: .leading) {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    ZStack {
+                    ZStack(alignment: .top) {
                         beatMarkers()
+                            .padding(.leading, 250)
                         
                         tracks()
+                            .padding(.leading, 250)
                         
                         playhead()
+                            .padding(.leading, 250)
+                        
+                        beatLabels()
                     }
-                    .padding(.leading, 10)
-                    .padding(.leading, 250)
                 }
                 
                 nodeList()
                     .frame(width: 250)
-                    .background(.regularMaterial)
-                    .padding(.top, 30)
+                    .background(.thickMaterial)
+                    .padding(.top, 40)
             }
             .frame(minHeight: 320)
         }
@@ -77,11 +80,15 @@ struct TimelineView: View {
     }
     
     func nodeList() -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 5) {
             ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
-                NodeListRowView(project: project, node: node)
-                
-                Divider()
+                VStack {
+                    NodeListRowView(project: project, node: node)
+                    
+                    Divider()
+                        .padding(.bottom, 2.5)
+                }
+                .frame(height: Constants.nodeViewHeight)
             }
             
             Button {
@@ -104,19 +111,48 @@ struct TimelineView: View {
         .animation(.easeIn(duration: 0.2), value: project.nodes)
     }
     
+    func beatLabels() -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
+                    ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
+                        VStack {
+                            Text(getBeatStr(x))
+                                .font(.caption)
+                                .foregroundStyle(.secondary.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.5))
+                                .frame(width: 30, height: 20)
+                                .padding(5)
+                                .onTapGesture {
+                                    guard !playheadManager.isPlaying else { return }
+                                    playheadManager.jumpTo(x)
+                                }
+                        }
+                        .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
+                    }
+                    
+                    Spacer()
+                }
+                
+                Image(systemName: "chevron.down")
+                    .frame(width: 20)
+                    .font(.largeTitle)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 22)
+                    .padding(.leading, -5)
+                    .offset(x: playheadManager.offset)
+            }
+            .frame(height: 40)
+            .padding(.leading, Constants.timelineLeadingPaddingFor(timeSignature: project.timeSignature))
+            .padding(.leading, 250)
+            .background(.thickMaterial)
+            .offset(y: geo.frame(in: .scrollView(axis: .vertical)).minY < 0 ? -geo.frame(in: .scrollView(axis: .vertical)).minY : 0)
+        }
+    }
+    
     func beatMarkers() -> some View {
         HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
             ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
-                VStack(spacing: 10) {
-                    Text(getBeatStr(x))
-                        .font(.caption)
-                        .foregroundStyle(.secondary.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.5))
-                        .frame(width: 30, height: 20)
-                        .onTapGesture {
-                            guard !playheadManager.isPlaying else { return }
-                            playheadManager.jumpTo(x)
-                        }
-                    
+                VStack {
                     Rectangle()
                         .fill(.gray.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.3))
                         .frame(width: 1)
@@ -131,10 +167,10 @@ struct TimelineView: View {
     
     func tracks() -> some View {
         HStack {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 5) {
                 ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
                     NodeTimelineView(project: project, node: node, selectedTransform: $selectedTransform, editTransform: editTransform)
-                        .frame(height: 80)
+                        .frame(height: Constants.nodeViewHeight)
                 }
                 
                 Spacer()
@@ -142,21 +178,14 @@ struct TimelineView: View {
             
             Spacer()
         }
-        .padding(.top, 30)
+        .padding(.top, 40)
         .padding(.leading, 4)
     }
     
     func playhead() -> some View {
         HStack {
-            VStack(spacing: 0) {
-                Image(systemName: "chevron.down")
-                    .font(.largeTitle)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 8.5)
-                
-                Rectangle()
-                    .fill(.primary)
-            }
+            Rectangle()
+            .fill(.primary)
             .frame(width: 2)
             .offset(x: playheadManager.offset)
             

@@ -57,13 +57,10 @@ class WaveGenerator {
         context.setLineWidth(1.5)
 
         let max: CGFloat = CGFloat(samples.max() ?? 0)
-        let heightNormalizationFactor = imageSize.height / max
+        let heightNormalizationFactor = imageSize.height / max / 2
         let widthNormalizationFactor = imageSize.width / CGFloat(samples.count)
-        for index in stride(from: 100, through: samples.count, by: 100) {
-            let subrange = samples[(index - 100)...index]
-            let average: Float = subrange.reduce(0.0) { return $0 + $1/Float(subrange.count) }
-            
-            let pixel = CGFloat(average) * heightNormalizationFactor
+        for index in stride(from: 0, through: samples.count, by: 50) {
+            let pixel = CGFloat(samples[index]) * heightNormalizationFactor
 
             let x = CGFloat(index) * widthNormalizationFactor
 
@@ -73,6 +70,13 @@ class WaveGenerator {
             context.setStrokeColor(strokeColor.cgColor)
             context.strokePath()
         }
+        
+        context.move(to: CGPoint(x: 0, y: middleY))
+        context.addLine(to: CGPoint(x: imageSize.width, y: middleY))
+        
+        context.setStrokeColor(strokeColor.cgColor)
+        context.strokePath()
+        
         guard let soundWaveImage = UIGraphicsGetImageFromCurrentImageContext() else { return nil }
 
         UIGraphicsEndImageContext()

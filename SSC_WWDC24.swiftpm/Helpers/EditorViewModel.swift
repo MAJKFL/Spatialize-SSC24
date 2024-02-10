@@ -39,7 +39,7 @@ class EditorViewModel: ObservableObject {
         
         let distanceModelParameters = PHASEGeometricSpreadingDistanceModelParameters()
         distanceModelParameters.fadeOutParameters = PHASEDistanceModelFadeOutParameters(cullDistance: 80)
-        distanceModelParameters.rolloffFactor = 0.8
+        distanceModelParameters.rolloffFactor = 0.5
         spatialMixerDefinition.distanceModelParameters = distanceModelParameters
         
         try! phaseEngine.start()

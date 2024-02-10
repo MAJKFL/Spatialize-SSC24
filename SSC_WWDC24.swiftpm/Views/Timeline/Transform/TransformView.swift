@@ -69,9 +69,11 @@ struct TransformView: View {
         }
         .foregroundStyle(.white)
         .frame(width: transformModel.length, height: Constants.nodeViewHeight)
-        .background(isObstructed ? Color.red.opacity(isEnabled ? 0.7 : 0) : Color.secondary.opacity(isEnabled ? 0.7 : 0))
-        .background(.ultraThinMaterial.opacity(isEnabled ? 1 : 0))
-        .clipShape(RoundedRectangle(cornerRadius: isEnabled ? 10 : 0))
+        .background {
+            RoundedRectangle(cornerRadius: isEnabled ? 10 : 0)
+                .fill(isObstructed ? Color.red.opacity(isEnabled ? 0.7 : 0) : Color.gray.opacity(isEnabled ? 0.7 : 0))
+                .strokeBorder(Color.gray.opacity(isEnabled ? 1 : 0), lineWidth: 3)
+        }
         .draggable(TransformTransfer(model: transformModel)) {
             Image(systemName: transformModel.type.iconName)
                 .foregroundStyle(Color.white)

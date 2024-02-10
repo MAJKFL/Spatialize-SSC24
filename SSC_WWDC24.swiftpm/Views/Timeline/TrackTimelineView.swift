@@ -38,7 +38,6 @@ struct TrackTimelineView: View {
                                 .fill(isObstructed ? .secondary.opacity(0.3) : node.color.opacity(0.7))
                                 .strokeBorder(isObstructed ? .secondary.opacity(0.7) : node.color.opacity(0.9), lineWidth: 3)
                                 .opacity(isEnabled ? 1 : 0.3)
-                                .background(.ultraThinMaterial)
                             
                             if isObstructed {
                                 GeometryReader { geo in
@@ -95,17 +94,12 @@ struct TrackTimelineView: View {
     }
     
     func loadImage() async {
-        if track.imageData == nil {
-            let newImage = await WaveGenerator.generateWaveImage(from: track.fileURL)
-            
-            track.imageData = newImage?.heicData()
-        }
-        
-        guard let imageData = track.imageData, let uiImage = UIImage(data: imageData) else { return }
+        let newImage = await WaveGenerator.generateWaveImage(from: track.fileURL)
 
-        DispatchQueue.main.async {
-            let image = Image(uiImage: uiImage)
-            self.waveformImage = image
+        if let newImage {
+            DispatchQueue.main.async {
+                self.waveformImage = Image(uiImage: newImage)
+            }
         }
     }
 }
