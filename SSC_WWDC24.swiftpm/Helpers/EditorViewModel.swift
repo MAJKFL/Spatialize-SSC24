@@ -20,6 +20,8 @@ class EditorViewModel: ObservableObject {
     private var eventIDs = [String]()
     private var hasBeenPlayed = [String]()
     
+    var soloMode = false
+    
     init(playheadManager: PlayheadManager) {
         self.playheadManager = playheadManager
         
@@ -72,7 +74,9 @@ class EditorViewModel: ObservableObject {
         for speakerNode in speakerNodes {
             speakerNode.updatePosition(playheadOffset: offset, nodePosition: speakerNode.nodeModel.position)
             
-            speakerNode.phaseSource.gain = speakerNode.nodeModel.isPlaying ? speakerNode.nodeModel.volume : 0
+            let areOtherSolo = soloMode && !speakerNode.nodeModel.isSolo
+            
+            speakerNode.phaseSource.gain = speakerNode.nodeModel.isPlaying && !areOtherSolo ? speakerNode.nodeModel.volume : 0
             
             guard playheadManager.isPlaying else { continue }
             

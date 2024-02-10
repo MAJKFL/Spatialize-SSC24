@@ -15,6 +15,7 @@ class Node: Identifiable {
     var name: String
     var volume: Double = 1
     var isPlaying = true
+    var isSolo = false
     
     var tracks = [Track]()
     var transforms = [TransformModel]()

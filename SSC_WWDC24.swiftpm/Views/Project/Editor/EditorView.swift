@@ -25,6 +25,9 @@ struct EditorView: View {
                     .onChange(of: node.color) { oldValue, newValue in
                         viewModel.onNodeColorChange(node)
                     }
+                    .onChange(of: node.isSolo) { oldValue, newValue in
+                        viewModel.soloMode = project.nodes.contains(where: { $0.isSolo })
+                    }
             }
             
             EditorViewRepresentable(viewModel: viewModel)

@@ -14,8 +14,12 @@ struct NodeListRowView: View {
     
     @State private var showDetailPopover = false
     
+    var areOtherSolo: Bool {
+        project.nodes.contains(where: { $0.isSolo }) && !node.isSolo
+    }
+    
     var body: some View {
-        HStack {
+        HStack(spacing: 15) {
             Button {
                 node.isPlaying.toggle()
             } label: {
@@ -23,6 +27,15 @@ struct NodeListRowView: View {
                     .font(.headline)
                     .frame(width: 18)
             }
+            
+            Button {
+                node.isSolo.toggle()
+            } label: {
+                Image(systemName: "headphones")
+                    .font(.headline)
+                    .frame(width: 18)
+            }
+            .tint(node.isSolo ? .orange : node.color.opacity(areOtherSolo ? 0.3 : 1))
             
             Text(node.name)
                 .lineLimit(1)
@@ -39,7 +52,7 @@ struct NodeListRowView: View {
                 detailsPopover()
             }
         }
-        .tint(node.color)
+        .tint(node.color.opacity(areOtherSolo ? 0.3 : 1))
         .frame(height: Constants.nodeViewHeight)
         .padding(.horizontal)
     }

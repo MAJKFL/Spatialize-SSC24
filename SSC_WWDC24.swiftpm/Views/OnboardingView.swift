@@ -114,10 +114,11 @@ struct OnboardingView: View {
                         Text("Listener")
                             .font(.title2)
                         
-                        // Video
-                        Rectangle()
-                            .fill(.gray)
+                        Image("OnboardingListener")
+                            .resizable()
+                            .scaledToFill()
                             .frame(maxWidth: .infinity, minHeight: 200)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                         
                         Text("Receives the speaker output. It's represented as the big, green sphere in the center of the editor plane. The green arrow shows the forward direction of the listener.")
                             .font(.subheadline)
@@ -128,10 +129,11 @@ struct OnboardingView: View {
                         Text("Creating/Editing")
                             .font(.title2)
                         
-                        // Video
-                        Rectangle()
-                            .fill(.gray)
+                        Image("OnboardingSpeaker")
+                            .resizable()
+                            .scaledToFill()
                             .frame(maxWidth: .infinity, minHeight: 200)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                         
                         Text("Use timeline's left bar to manage speaker nodes")
                             .font(.subheadline)
