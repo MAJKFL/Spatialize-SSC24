@@ -201,20 +201,20 @@ struct TimelineView: View {
     func addNewNode() {
         let number = project.nodes
             .map { $0.name }
-            .filter { $0.contains("New Speaker") }
-            .map { Int($0.replacingOccurrences(of: "New Speaker ", with: "")) ?? 0 }
+            .filter { $0.contains("Speaker") }
+            .map { Int($0.replacingOccurrences(of: "Speaker ", with: "")) ?? 0 }
             .max() ?? 0
         
         let defaultNodeNameCount = project.nodes
             .map { $0.name }
-            .filter { $0.contains("New Speaker") }
+            .filter { $0.contains("Speaker") }
             .count
         
         let currentPosition = project.nodes
             .map { $0.position }
             .max() ?? -1
         
-        project.nodes.append(Node(position: currentPosition + 1, name: "New Speaker\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: colors[(currentPosition + 1) % colors.count]))
+        project.nodes.append(Node(position: currentPosition + 1, name: "Speaker\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: colors[(currentPosition + 1) % colors.count]))
         project.nodes.sort(by: { $0.position < $1.position })
     }
 }

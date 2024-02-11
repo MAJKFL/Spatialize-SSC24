@@ -18,26 +18,19 @@ class Track: Identifiable {
     var start: Double = 0
     var trackLength: Double = 0
     
-    let usesBundledAudio: Bool
-    
-    init(id: UUID = UUID(), fileName: String, ext: String, trackLength: Double = 0, start: Double = 0, usesBundledAudio: Bool = false) {
+    init(id: UUID = UUID(), fileName: String, ext: String, trackLength: Double = 0, start: Double = 0) {
         self.id = id
         self.fileName = fileName
         self.ext = ext
         self.trackLength = trackLength
         self.start = start
-        self.usesBundledAudio = usesBundledAudio
     }
     
     var fileURL: URL {        
-        if usesBundledAudio {
-            return Bundle.main.url(forResource: fileName, withExtension: ext)!
-        } else {
-            return FileManager.default
-                .urls(for: .documentDirectory, in: .userDomainMask)
-                .first!
-                .appending(path: id.uuidString)
-                .appendingPathExtension(ext)
-        }
+        return FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)
+            .first!
+            .appending(path: id.uuidString)
+            .appendingPathExtension(ext)
     }
 }

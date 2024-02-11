@@ -40,7 +40,6 @@ class WaveGenerator {
             print(error)
         }
 
-//        let floatArray = Array(UnsafeBufferPointer(start: buffer.floatChannelData![0], count: Int(buffer.frameLength)))
         let samples = UnsafeBufferPointer(start: buffer.floatChannelData![0], count: Int(buffer.frameLength))
         
         let drawingRect = CGRect(origin: .zero, size: imageSize)

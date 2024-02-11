@@ -62,6 +62,8 @@ class EditorViewModel: ObservableObject {
             try! phaseEngine.rootObject.addChild(source)
             let sphereNode = SpeakerNode(nodeModel: node, phaseEngine: phaseEngine, phaseSource: source)
             
+            soloMode = soloMode || node.isSolo
+            
             speakerNodes.append(sphereNode)
         }
     }
