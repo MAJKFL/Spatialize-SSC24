@@ -31,11 +31,6 @@ struct EditorView: View {
             }
             
             EditorViewRepresentable(viewModel: viewModel)
-                .onAppear {
-                    viewModel.setSpeakerNodes(for: project.nodes)
-                    viewModel.registerTracks(project.nodes.flatMap({ $0.tracks }))
-                    viewModel.updateSpeakerNodePosition(playheadOffset: 0)
-                }
                 .onChange(of: project.nodes) { oldValue, newValue in
                     viewModel.setSpeakerNodes(for: newValue)
                 }

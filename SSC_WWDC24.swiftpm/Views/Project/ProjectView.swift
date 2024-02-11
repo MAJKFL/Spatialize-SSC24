@@ -12,6 +12,7 @@ struct ProjectView: View {
     
     @State private var playheadManager: PlayheadManager
     @State private var editTransform = false
+    @State private var isPlayAvailable = true
     @State private var selectedTransform: TransformModel?
     
     @StateObject var viewModel: EditorViewModel
@@ -23,6 +24,19 @@ struct ProjectView: View {
         self._viewModel = StateObject(wrappedValue: EditorViewModel(playheadManager: playheadMng))
     }
     
+    var numberOfBeats: Int {
+        let lastTrackEnd = project.nodes
+            .flatMap { $0.tracks }
+            .map { getEndFor(track: $0) }
+            .max()
+        
+        if let lastTrackEnd {
+            return Constants.getNumberOfBeatsFor(lastTrackEnd, with: project.timeSignature)
+        } else {
+            return Int(Constants.fullBeatWidth) / 10 * project.timeSignature.secondDigit
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
@@ -31,7 +45,7 @@ struct ProjectView: View {
                 transformPicker()
             }
             
-            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
+            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform, numberOfBeats: numberOfBeats)
                 .frame(height: 350)
         }
         .toolbarRole(.editor)
@@ -70,11 +84,35 @@ struct ProjectView: View {
         .toolbarRole(.editor)
         .ignoresSafeArea(.keyboard)
         .onChange(of: project) { oldValue, newValue in
+            isPlayAvailable = false
             playheadManager.pause()
             playheadManager.revert()
             viewModel.pausePlayback()
             playheadManager.project = newValue
+            
+            Task {
+                await viewModel.calculateNodePositions(maxPlayheadOffset: Double(numberOfBeats + 10) * Constants.fullBeatWidth)
+                viewModel.updateSpeakerNodePosition(playheadOffset: 0)
+                
+                DispatchQueue.main.async {
+                    isPlayAvailable = true
+                }
+            }
+        }
+        .onAppear {
+            isPlayAvailable = false
+            viewModel.setSpeakerNodes(for: project.nodes)
+            viewModel.registerTracks(project.nodes.flatMap({ $0.tracks }))
             viewModel.updateSpeakerNodePosition(playheadOffset: 0)
+            
+            Task {
+                await viewModel.calculateNodePositions(maxPlayheadOffset: Double(numberOfBeats + 10) * Constants.fullBeatWidth)
+                viewModel.updateSpeakerNodePosition(playheadOffset: 0)
+                
+                DispatchQueue.main.async {
+                    isPlayAvailable = true
+                }
+            }
         }
     }
     
@@ -124,12 +162,34 @@ struct ProjectView: View {
             }
             
             Button {
-                playheadManager.toggle()
+                if !playheadManager.isPlaying {
+                    isPlayAvailable = false
+                    Task {
+                        await viewModel.calculateNodePositions(maxPlayheadOffset: Double(numberOfBeats + 10) * Constants.fullBeatWidth)
+                        playheadManager.toggle()
+                        
+                        DispatchQueue.main.async {
+                            isPlayAvailable = true
+                        }
+                    }
+                } else {
+                    playheadManager.toggle()
+                }
             } label: {
-                Label("Play/Pause", systemImage: "play.fill")
+                if isPlayAvailable {
+                    Label("Play/Pause", systemImage: "play.fill")
+                } else {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                }
             }
             .buttonStyle(.plain)
             .foregroundStyle(playheadManager.isPlaying ? .green : .accentColor)
+            .disabled(!isPlayAvailable)
         }
+    }
+    
+    func getEndFor(track: Track) -> Double {
+        Constants.trackWidth(track, bpm: project.bpm) + track.start
     }
 }

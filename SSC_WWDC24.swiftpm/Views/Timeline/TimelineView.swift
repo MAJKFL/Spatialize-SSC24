@@ -15,18 +15,7 @@ struct TimelineView: View {
     @Binding var selectedTransform: TransformModel?
     let editTransform: Bool
     
-    var numberOfBeats: Int {
-        let lastTrackEnd = project.nodes
-            .flatMap { $0.tracks }
-            .map { getEndFor(track: $0) }
-            .max()
-        
-        if let lastTrackEnd {
-            return Constants.getNumberOfBeatsFor(lastTrackEnd, with: project.timeSignature)
-        } else {
-            return Int(Constants.fullBeatWidth) / 10 * project.timeSignature.secondDigit
-        }
-    }
+    let numberOfBeats: Int
     
     let colors = [
         UIColor(#colorLiteral(red: 0, green: 0.631, blue: 0.847, alpha: 1)),
@@ -188,10 +177,6 @@ struct TimelineView: View {
             Spacer()
         }
         .padding(.leading, 4)
-    }
-    
-    func getEndFor(track: Track) -> Double {
-        Constants.trackWidth(track, bpm: project.bpm) + track.start
     }
     
     func getBeatStr(_ x: Int) -> String {

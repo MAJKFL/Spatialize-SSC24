@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SceneKit
 
 @Model
 class Node: Identifiable {
@@ -37,6 +38,13 @@ class Node: Identifiable {
         set(value) {
             uiColor = UIColor(value)
         }
+    }
+    
+    var startingPosition: SCNVector3 {
+        let x: Float = cos(.pi * Float(position) / 5)
+        let z: Float = sin(.pi * Float(position) / 5)
+        
+        return SCNVector3(x, 13, z)
     }
     
     init(position: Int, name: String, color: UIColor) {

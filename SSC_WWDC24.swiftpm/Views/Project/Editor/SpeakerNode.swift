@@ -12,12 +12,20 @@ class SpeakerNode: SCNNode {
     var nodeModel: Node!
     var phaseEngine: PHASEEngine!
     var phaseSource: PHASESource!
+    var spatialMixerDefinition: PHASESpatialMixerDefinition!
+    var listener: PHASEListener!
     
-    init(nodeModel: Node, phaseEngine: PHASEEngine, phaseSource: PHASESource) {
+    var positionsOverTime = [SCNVector3]()
+    var phasePositionsOverTime = [simd_float4]()
+    var sortedTracks = [Track]()
+    
+    init(nodeModel: Node, phaseEngine: PHASEEngine, phaseSource: PHASESource, spatialMixerDefinition: PHASESpatialMixerDefinition, listener: PHASEListener) {
         super.init()
         self.nodeModel = nodeModel
         self.phaseEngine = phaseEngine
         self.phaseSource = phaseSource
+        self.spatialMixerDefinition = spatialMixerDefinition
+        self.listener = listener
         
         let sphereGeometry = SCNSphere(radius: 3)
         
@@ -32,17 +40,61 @@ class SpeakerNode: SCNNode {
         self.geometry = sphereGeometry
         self.physicsBody = spherePhysicsBody
         
-        let x: Float = cos(.pi * Float(nodeModel.position) / 5)
-        let z: Float = sin(.pi * Float(nodeModel.position) / 5)
-        
-        self.position = SCNVector3(x, 13, z)
+        self.position = nodeModel.startingPosition
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func updatePosition(playheadOffset offset: Double, nodePosition: Int) {
+    /// Changes position using efficient lookup of the positions in the table
+    func updatePosition(playheadOffset offset: Double) {
+        let offsetIndex = Int(offset)
+        
+        guard positionsOverTime.count > offsetIndex else { return }
+        
+        position = positionsOverTime[offsetIndex]
+        phaseSource.transform.columns.3 = phasePositionsOverTime[offsetIndex]
+        
+        if let track = sortedTracks.first, track.start <= offset {
+            let id = track.id.uuidString + "-event"
+            
+            let mixerParameters = PHASEMixerParameters()
+            mixerParameters.addSpatialMixerParameters(identifier: spatialMixerDefinition.identifier, source: phaseSource, listener: listener)
+            
+            let soundEvent = try! PHASESoundEvent(engine: phaseEngine, assetIdentifier: id, mixerParameters: mixerParameters)
+            
+            soundEvent.start()
+            
+            sortedTracks.removeFirst()
+        }
+    }
+    
+    /// Prepares all positions beforehand for later faster access
+    func preparePositionsOverTime(currentPlayheadOffset: Double, maxPlayheadOffset: Double) async {
+        positionsOverTime = []
+        phasePositionsOverTime = []
+        sortedTracks = []
+        positionsOverTime.reserveCapacity(Int(ceil(maxPlayheadOffset)))
+        phasePositionsOverTime.reserveCapacity(Int(ceil(maxPlayheadOffset)))
+        
+        var newPosition = await getPosition(atOffset: 0, previousPosition: nodeModel.startingPosition)
+        positionsOverTime.append(newPosition)
+        phasePositionsOverTime.append(simd_make_float4(newPosition.x, newPosition.y, newPosition.z, 1.0))
+        
+        for offset in stride(from: 1.0, to: ceil(maxPlayheadOffset), by: 1.0) {
+            newPosition = await getPosition(atOffset: offset, previousPosition: newPosition)
+            positionsOverTime.append(newPosition)
+            phasePositionsOverTime.append(simd_make_float4(newPosition.x, newPosition.y, newPosition.z, 1.0))
+        }
+        
+        nodeModel.tracks.filter({ $0.start > currentPlayheadOffset }).sorted(by: { $0.start < $1.start }).forEach { track in
+            sortedTracks.append(track)
+        }
+    }
+    
+    /// Calculates position for specified offset
+    private func getPosition(atOffset offset: Double, previousPosition: SCNVector3) async -> SCNVector3 {
         let previousTransform = nodeModel.transforms
             .filter { trans in
                 trans.start + trans.length < offset
@@ -50,18 +102,13 @@ class SpeakerNode: SCNNode {
             .max(by: { $0.start + $0.length < $1.start + $1.length })
         
         if let currentTransform = nodeModel.transforms.first(where: { $0.start <= offset && $0.start + $0.length >= offset }) {
-            position = currentTransform.getPositionFor(playheadOffset: offset, currentPosition: position, source: previousTransform?.endPosition ?? SCNVector3(0, 13, 0))
+            return currentTransform.getPositionFor(playheadOffset: offset, currentPosition: previousPosition, source: previousTransform?.endPosition ?? nodeModel.startingPosition)
         } else {
             if let previousTransform {
-                position = previousTransform.endPosition
+                return previousTransform.endPosition
             } else {
-                let x: Float = cos(.pi * Float(nodePosition) / 5)
-                let z: Float = sin(.pi * Float(nodePosition) / 5)
-                
-                position = SCNVector3(x, 13, z)
+                return nodeModel.startingPosition
             }
         }
-        
-        phaseSource.transform.columns.3 = simd_make_float4(position.x, position.y, position.z, 1.0)
     }
 }

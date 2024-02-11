@@ -47,6 +47,12 @@ class EditorViewModel: ObservableObject {
         try! phaseEngine.start()
     }
     
+    func calculateNodePositions(maxPlayheadOffset: Double) async {
+        for speakerNode in speakerNodes {
+            await speakerNode.preparePositionsOverTime(currentPlayheadOffset: playheadManager.offset, maxPlayheadOffset: maxPlayheadOffset)
+        }
+    }
+    
     func setSpeakerNodes(for nodes: [Node]) {
         for speakerNode in speakerNodes {
             if !nodes.contains(where: { $0.id == speakerNode.nodeModel.id }) {
@@ -60,7 +66,7 @@ class EditorViewModel: ObservableObject {
             let source = PHASESource(engine: phaseEngine)
             source.transform = matrix_identity_float4x4
             try! phaseEngine.rootObject.addChild(source)
-            let sphereNode = SpeakerNode(nodeModel: node, phaseEngine: phaseEngine, phaseSource: source)
+            let sphereNode = SpeakerNode(nodeModel: node, phaseEngine: phaseEngine, phaseSource: source, spatialMixerDefinition: spatialMixerDefinition, listener: listener)
             
             soloMode = soloMode || node.isSolo
             
@@ -74,27 +80,11 @@ class EditorViewModel: ObservableObject {
     
     func updateSpeakerNodePosition(playheadOffset offset: Double) {
         for speakerNode in speakerNodes {
-            speakerNode.updatePosition(playheadOffset: offset, nodePosition: speakerNode.nodeModel.position)
+            speakerNode.updatePosition(playheadOffset: offset)
             
             let areOtherSolo = soloMode && !speakerNode.nodeModel.isSolo
             
             speakerNode.phaseSource.gain = speakerNode.nodeModel.isPlaying && !areOtherSolo ? speakerNode.nodeModel.volume : 0
-            
-            guard playheadManager.isPlaying else { continue }
-            
-            if let currentTrack = speakerNode.nodeModel.tracks.first(where: { $0.start.isEqualTo(to: offset, withPrecision: 2) }) {
-                let id = currentTrack.id.uuidString + "-event"
-                
-                if !hasBeenPlayed.contains(id) {
-                    let mixerParameters = PHASEMixerParameters()
-                    mixerParameters.addSpatialMixerParameters(identifier: spatialMixerDefinition.identifier, source: speakerNode.phaseSource, listener: listener)
-                    
-                    let soundEvent = try! PHASESoundEvent(engine: phaseEngine, assetIdentifier: id, mixerParameters: mixerParameters)
-                    
-                    soundEvent.start()
-                    hasBeenPlayed.append(id)
-                }
-            }
         }
     }
     
@@ -131,7 +121,7 @@ class EditorViewModel: ObservableObject {
             }
             
             for speakerNode in speakerNodes {
-                speakerNode.updatePosition(playheadOffset: offset, nodePosition: speakerNode.nodeModel.position)
+                speakerNode.updatePosition(playheadOffset: offset)
                 
                 if let currentTrack = speakerNode.nodeModel.tracks.first(where: { $0.start <= offset && $0.start + Constants.trackWidth($0, bpm: bpm) >= offset }) {
                     let id = currentTrack.id.uuidString + "-event"

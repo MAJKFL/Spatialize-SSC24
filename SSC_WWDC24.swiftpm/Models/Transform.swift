@@ -194,7 +194,7 @@ class TransformModel: Transform {
             
             let periodLength = length / frequency
             
-            if offset.truncatingRemainder(dividingBy: periodLength) <= 1.5 {
+            if offset.truncatingRemainder(dividingBy: periodLength) <= 0.5 {
                 var result = SCNVector3(x: Float.random(in: -radius...radius), y: Float.random(in: 0...(radius / 2)), z: Float.random(in: -radius...radius))
                 
                 while simd_distance(simd_float3(result), simd_float3(SCNVector3(0, 4.5, 0))) < 8 {
