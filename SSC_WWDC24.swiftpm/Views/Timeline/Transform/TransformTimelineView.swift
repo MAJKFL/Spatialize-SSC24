@@ -16,6 +16,8 @@ struct TransformTimelineView: View {
     @Binding var selectedTransform: TransformModel?
     @State private var showPopover = false
     
+    let updateSpeaker: (ObjectIdentifier, Double) -> ()
+    
     @State private var startPointChange: Double = 0
     @State private var endPointChange: Double = 0
     
@@ -51,6 +53,9 @@ struct TransformTimelineView: View {
                             .popover(isPresented: $showPopover) {
                                 TransformEditView(project: project, node: node, transformModel: transformModel)
                                     .frame(width: 600, height: 800)
+                                    .onDisappear {
+                                        updateSpeaker(node.id, transformModel.start)
+                                    }
                             }
                         }
                     }
@@ -124,6 +129,8 @@ struct TransformTimelineView: View {
                         context.delete(transformModel)
                         node.transforms.removeAll(where: { $0.id == transformModel.id })
                     }
+                    
+                    updateSpeaker(node.id, transformModel.start)
                 }
             }
     }

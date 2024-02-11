@@ -9,6 +9,10 @@ import SceneKit
 import PHASE
 
 class SpeakerNode: SCNNode {
+    var id: ObjectIdentifier {
+        nodeModel.id
+    }
+    
     var nodeModel: Node!
     var phaseEngine: PHASEEngine!
     var phaseSource: PHASESource!
@@ -71,10 +75,9 @@ class SpeakerNode: SCNNode {
     }
     
     /// Prepares all positions beforehand for later faster access
-    func preparePositionsOverTime(currentPlayheadOffset: Double, maxPlayheadOffset: Double) async {
+    func update(currentPlayheadOffset: Double, maxPlayheadOffset: Double) async {
         positionsOverTime = []
         phasePositionsOverTime = []
-        sortedTracks = []
         positionsOverTime.reserveCapacity(Int(ceil(maxPlayheadOffset)))
         phasePositionsOverTime.reserveCapacity(Int(ceil(maxPlayheadOffset)))
         
@@ -87,9 +90,37 @@ class SpeakerNode: SCNNode {
             positionsOverTime.append(newPosition)
             phasePositionsOverTime.append(simd_make_float4(newPosition.x, newPosition.y, newPosition.z, 1.0))
         }
+    }
+    
+    func updateTracks(currentPlayheadOffset: Double) {
+        sortedTracks = []
         
         nodeModel.tracks.filter({ $0.start > currentPlayheadOffset }).sorted(by: { $0.start < $1.start }).forEach { track in
             sortedTracks.append(track)
+        }
+    }
+    
+    func updatePrecalculatedPositions(from: Double, to: Double) async {
+        guard Int(from) < positionsOverTime.count else { return }
+        
+        let fromIndex = round(from)
+        
+        var prevPosition: SCNVector3
+        
+        if fromIndex > 0 {
+            prevPosition = positionsOverTime[Int(fromIndex) - 1]
+        } else {
+            prevPosition = nodeModel.startingPosition
+        }
+        
+        var newPosition = await getPosition(atOffset: fromIndex, previousPosition: prevPosition)
+        positionsOverTime[Int(fromIndex)] = newPosition
+        phasePositionsOverTime[Int(fromIndex)] = simd_make_float4(newPosition.x, newPosition.y, newPosition.z, 1.0)
+        
+        for offset in stride(from: fromIndex + 1, to: ceil(to), by: 1.0) {
+            newPosition = await getPosition(atOffset: offset, previousPosition: newPosition)
+            positionsOverTime[Int(offset)] = newPosition
+            phasePositionsOverTime[Int(offset)] = simd_make_float4(newPosition.x, newPosition.y, newPosition.z, 1.0)
         }
     }
     

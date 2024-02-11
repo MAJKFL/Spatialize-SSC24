@@ -40,12 +40,12 @@ struct ProjectView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                EditorView(project: project, playheadManager: playheadManager, viewModel: viewModel)
+                EditorView(project: project, playheadManager: playheadManager, viewModel: viewModel, updateSpeaker: updateSpeaker(id:from:))
                 
                 transformPicker()
             }
             
-            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform, numberOfBeats: numberOfBeats)
+            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform, numberOfBeats: numberOfBeats, updateSpeaker: updateSpeaker(id:from:))
                 .frame(height: 350)
         }
         .toolbarRole(.editor)
@@ -84,35 +84,24 @@ struct ProjectView: View {
         .toolbarRole(.editor)
         .ignoresSafeArea(.keyboard)
         .onChange(of: project) { oldValue, newValue in
-            isPlayAvailable = false
             playheadManager.pause()
             playheadManager.revert()
             viewModel.pausePlayback()
             playheadManager.project = newValue
             
-            Task {
-                await viewModel.calculateNodePositions(maxPlayheadOffset: Double(numberOfBeats + 10) * Constants.fullBeatWidth)
-                viewModel.updateSpeakerNodePosition(playheadOffset: 0)
-                
-                DispatchQueue.main.async {
-                    isPlayAvailable = true
-                }
-            }
+            updateAllSpeakers()
+        }
+        .onChange(of: numberOfBeats) { oldValue, newValue in
+            guard newValue > oldValue else { return }
+            
+            updateAllSpeakers()
         }
         .onAppear {
-            isPlayAvailable = false
             viewModel.setSpeakerNodes(for: project.nodes)
             viewModel.registerTracks(project.nodes.flatMap({ $0.tracks }))
             viewModel.updateSpeakerNodePosition(playheadOffset: 0)
             
-            Task {
-                await viewModel.calculateNodePositions(maxPlayheadOffset: Double(numberOfBeats + 10) * Constants.fullBeatWidth)
-                viewModel.updateSpeakerNodePosition(playheadOffset: 0)
-                
-                DispatchQueue.main.async {
-                    isPlayAvailable = true
-                }
-            }
+            updateAllSpeakers()
         }
     }
     
@@ -162,19 +151,7 @@ struct ProjectView: View {
             }
             
             Button {
-                if !playheadManager.isPlaying {
-                    isPlayAvailable = false
-                    Task {
-                        await viewModel.calculateNodePositions(maxPlayheadOffset: Double(numberOfBeats + 10) * Constants.fullBeatWidth)
-                        playheadManager.toggle()
-                        
-                        DispatchQueue.main.async {
-                            isPlayAvailable = true
-                        }
-                    }
-                } else {
-                    playheadManager.toggle()
-                }
+                playheadManager.toggle()
             } label: {
                 if isPlayAvailable {
                     Label("Play/Pause", systemImage: "play.fill")
@@ -191,5 +168,31 @@ struct ProjectView: View {
     
     func getEndFor(track: Track) -> Double {
         Constants.trackWidth(track, bpm: project.bpm) + track.start
+    }
+    
+    func updateSpeaker(id: ObjectIdentifier, from: Double) {
+        isPlayAvailable = false
+        
+        Task {
+            await viewModel.updateSpeaker(id: id, from: from, to: Double(numberOfBeats + 10) * Constants.fullBeatWidth)
+            viewModel.updateSpeakerPosition(id: id, atOffset: playheadManager.offset)
+            
+            DispatchQueue.main.async {
+                isPlayAvailable = true
+            }
+        }
+    }
+    
+    func updateAllSpeakers() {
+        isPlayAvailable = false
+        
+        Task {
+            await viewModel.updateAllSpeakers(maxPlayheadOffset: Double(numberOfBeats + 10) * Constants.fullBeatWidth)
+            viewModel.updateSpeakerNodePosition(playheadOffset: playheadManager.offset)
+            
+            DispatchQueue.main.async {
+                isPlayAvailable = true
+            }
+        }
     }
 }

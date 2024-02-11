@@ -18,6 +18,8 @@ struct NodeTimelineView: View {
     
     let editTransform: Bool
     
+    let updateSpeaker: (ObjectIdentifier, Double) -> ()
+    
     var body: some View {
         ZStack {
             if !editTransform {
@@ -68,7 +70,7 @@ struct NodeTimelineView: View {
             
             ForEach(node.transforms) { transformModel in
                 HStack {
-                    TransformTimelineView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform)
+                    TransformTimelineView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform, updateSpeaker: updateSpeaker)
                         .offset(x: transformModel.start)
                         .disabled(!editTransform)
                     
@@ -87,11 +89,15 @@ struct NodeTimelineView: View {
             context.delete(originalTransform)
             
             otherNode.transforms.removeAll(where: { $0.id == transform.id })
+            
+            updateSpeaker(otherNode.id, originalTransform.start)
         }
         
         transform.start = location.x - location.x.truncatingRemainder(dividingBy: Constants.fullBeatWidth / 4)
         node.transforms.append(transform)
         node.transforms.sort(by: { $0.start > $1.start })
+        
+        updateSpeaker(node.id, transform.start)
     }
     
     private func handleFileDrop(_ url: URL, at location: CGPoint) {

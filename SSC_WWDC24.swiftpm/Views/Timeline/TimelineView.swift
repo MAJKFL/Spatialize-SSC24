@@ -17,6 +17,8 @@ struct TimelineView: View {
     
     let numberOfBeats: Int
     
+    let updateSpeaker: (ObjectIdentifier, Double) -> ()
+    
     let colors = [
         UIColor(#colorLiteral(red: 0, green: 0.631, blue: 0.847, alpha: 1)),
         UIColor(#colorLiteral(red: 0.004, green: 0.38, blue: 0.996, alpha: 1)),
@@ -37,7 +39,7 @@ struct TimelineView: View {
             ZStack(alignment: .leading) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack(alignment: .top) {
-                        HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
+                        LazyHStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
                             ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
                                 VStack {
                                     Rectangle()
@@ -115,7 +117,7 @@ struct TimelineView: View {
     func beatLabels() -> some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
+                LazyHStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
                     ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
                         VStack {
                             Text(getBeatStr(x))
@@ -154,7 +156,7 @@ struct TimelineView: View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
                 ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
-                    NodeTimelineView(project: project, node: node, selectedTransform: $selectedTransform, editTransform: editTransform)
+                    NodeTimelineView(project: project, node: node, selectedTransform: $selectedTransform, editTransform: editTransform, updateSpeaker: updateSpeaker)
                         .frame(height: Constants.nodeViewHeight)
                 }
                 

@@ -47,10 +47,24 @@ class EditorViewModel: ObservableObject {
         try! phaseEngine.start()
     }
     
-    func calculateNodePositions(maxPlayheadOffset: Double) async {
+    func updateAllSpeakers(maxPlayheadOffset: Double) async {
         for speakerNode in speakerNodes {
-            await speakerNode.preparePositionsOverTime(currentPlayheadOffset: playheadManager.offset, maxPlayheadOffset: maxPlayheadOffset)
+            await speakerNode.update(currentPlayheadOffset: playheadManager.offset, maxPlayheadOffset: maxPlayheadOffset)
         }
+    }
+    
+    func updateSpeaker(id: ObjectIdentifier, from: Double, to: Double) async {
+        for speakerNode in speakerNodes {
+            guard await speakerNode.id == id else { continue }
+            
+            await speakerNode.updatePrecalculatedPositions(from: from, to: to)
+            
+            return
+        }
+    }
+    
+    func updateSpeakerPosition(id: ObjectIdentifier, atOffset offset: Double) {
+        speakerNodes.first(where: { $0.id == id })?.updatePosition(playheadOffset: offset)
     }
     
     func setSpeakerNodes(for nodes: [Node]) {
@@ -113,6 +127,10 @@ class EditorViewModel: ObservableObject {
     }
     
     func startOrResumePlayback(atOffset offset: Double, bpm: Int, shouldSeek: Bool) {
+        for speakerNode in speakerNodes {
+            speakerNode.updateTracks(currentPlayheadOffset: offset)
+        }
+        
         if shouldSeek {
             hasBeenPlayed = [String]()
             

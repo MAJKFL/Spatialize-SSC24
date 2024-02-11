@@ -17,6 +17,8 @@ struct EditorView: View {
     
     @State private var shouldSeek = true
     
+    let updateSpeaker: (ObjectIdentifier, Double) -> ()
+    
     var body: some View {
         ZStack {
             ForEach(project.nodes) { node in
@@ -33,6 +35,12 @@ struct EditorView: View {
             EditorViewRepresentable(viewModel: viewModel)
                 .onChange(of: project.nodes) { oldValue, newValue in
                     viewModel.setSpeakerNodes(for: newValue)
+                    
+                    if let newNode = newValue.first(where: { n in
+                        !oldValue.contains(where: { $0.id == n.id })
+                    }) {
+                        updateSpeaker(newNode.id, 0)
+                    }
                 }
                 .onChange(of: playheadManager.offset) { oldValue, newValue in
                     if !playheadManager.isPlaying {
