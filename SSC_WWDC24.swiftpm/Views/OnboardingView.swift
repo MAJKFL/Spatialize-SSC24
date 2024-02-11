@@ -7,7 +7,9 @@
 
 import SwiftUI
 
+/// Introduction to the features and controls of the app.
 struct OnboardingView: View {
+    /// Dismisses the sheet.
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -92,7 +94,8 @@ struct OnboardingView: View {
         }
     }
     
-    func speakerNodeTutorial() -> some View {
+    /// Explains how to use speaker nodes.
+    private func speakerNodeTutorial() -> some View {
         VStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 30) {
@@ -157,7 +160,8 @@ struct OnboardingView: View {
         .padding(.horizontal, 80)
     }
     
-    func trackTutorial() -> some View {
+    /// Explains how to manage audio files.
+    private func trackTutorial() -> some View {
         VStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 30) {
@@ -220,7 +224,8 @@ struct OnboardingView: View {
         .padding(.horizontal, 80)
     }
     
-    func transformTutorial() -> some View {
+    /// Explains how to use transforms.
+    private func transformTutorial() -> some View {
         VStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 30) {
@@ -298,7 +303,8 @@ struct OnboardingView: View {
         .padding(.horizontal, 80)
     }
     
-    func playbackTutorial() -> some View {
+    /// Explains how to manage playback.
+    private func playbackTutorial() -> some View {
         VStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 30) {

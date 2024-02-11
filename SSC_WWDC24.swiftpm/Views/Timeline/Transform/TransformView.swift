@@ -7,15 +7,20 @@
 
 import SwiftUI
 
+/// Universal transform representation.
 struct TransformView: View {
+    /// Specifies whether the view should be enabled.
     @Environment(\.isEnabled) var isEnabled
+    /// Transform represented by this view.
     @Bindable var transformModel: TransformModel
     
+    /// Indicates whether the transform is obstructed by a different transform.
     var isObstructed = false
-    
+    /// Specifies whether the view should be a template.
     var isTemplate = false
     
-    let rows = [GridItem(.flexible()), GridItem(.flexible())]
+    /// Rows used for displaying the transform properties.
+    private let rows = [GridItem(.flexible()), GridItem(.flexible())]
     
     var body: some View {
         HStack {
@@ -86,7 +91,8 @@ struct TransformView: View {
         }
     }
     
-    func getHeaderOffset(from geo: GeometryProxy) -> Double {
+    /// Returns views offset withing a scroll view.
+    private func getHeaderOffset(from geo: GeometryProxy) -> Double {
         guard geo.frame(in: .scrollView).minX < 250 && !isTemplate else { return 0 }
         
         let offset = -geo.frame(in: .scrollView).minX + 250

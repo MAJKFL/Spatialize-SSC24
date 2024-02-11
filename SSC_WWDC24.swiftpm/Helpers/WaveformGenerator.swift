@@ -9,6 +9,7 @@ import UIKit
 import AVFoundation
 
 extension AVAudioFile{
+    /// Duration in seconds.
     var duration: Double {
         let sampleRateSong = Double(processingFormat.sampleRate)
         let lengthSongSeconds = Double(length) / sampleRateSong
@@ -16,13 +17,16 @@ extension AVAudioFile{
     }
 }
 
+/// Generates waveform images for audio files.
 class WaveGenerator {
-    static func getDuration(_ audioUrl: URL) -> Double {
+    /// Returns audio file duration for the file at specified URL.
+    private static func getDuration(_ audioUrl: URL) -> Double {
         let file = try! AVAudioFile(forReading: audioUrl)
         
         return file.duration
     }
     
+    /// Generates waveform image for given parameters.
     private static func generateWaveImage(
         _ audioUrl: URL,
         _ imageSize: CGSize,
@@ -82,6 +86,7 @@ class WaveGenerator {
         return soundWaveImage
     }
 
+    /// Generates a waveform image for specified URL.
     static func generateWaveImage(from audioUrl: URL) async -> UIImage? {
         return await generateWaveImage(audioUrl, CGSize(width: getDuration(audioUrl) * Constants.fullBeatMarkerWidth * 10, height: 100), UIColor.white)
     }

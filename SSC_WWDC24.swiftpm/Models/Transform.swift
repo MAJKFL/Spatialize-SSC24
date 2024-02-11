@@ -12,19 +12,11 @@ import UniformTypeIdentifiers
 import SceneKit
 import SwiftUI
 
-protocol Transform {
-    var id: UUID { get set }
-    var start: Double { get set }
-    var length: Double { get set }
-    
-    var type: TransformType { get set }
-    var doubleFields: [ String: Double ] { get set }
-    var booleanFields: [ String: Bool ] { get set }
-}
-
+/// Type of the transform.
 enum TransformType: String, CaseIterable, Codable {
     case move, orbit, spiral, random
     
+    /// Name displayed in the interface of the transform type.
     var displayName: String {
         switch self {
         case .move:
@@ -38,6 +30,7 @@ enum TransformType: String, CaseIterable, Codable {
         }
     }
     
+    /// Name of the icon associated with the transform type.
     var iconName: String {
         switch self {
         case .move:
@@ -51,6 +44,7 @@ enum TransformType: String, CaseIterable, Codable {
         }
     }
     
+    /// Description associated with the transform type.
     var displayDescription: LocalizedStringKey {
         switch self {
         case .move:
@@ -89,16 +83,23 @@ enum TransformType: String, CaseIterable, Codable {
     }
 }
 
+/// Swift Data representation of a transform.
 @Model
-class TransformModel: Transform {
+class TransformModel {
+    /// Unique identifier.
     var id: UUID
+    /// Start displacment of the transfer on the display.
     var start: Double
+    /// On screen length of the transform.
     var length: Double
-    
+    /// Type of the transform.
     var type: TransformType
+    /// Numeric properties of the transform.
     var doubleFields: [ String: Double ]
+    /// Boolean properties of the transform.
     var booleanFields: [ String: Bool ]
     
+    /// Creates a new Swift Data representation of the transform with given properties.
     init(id: UUID = UUID(), start: Double, length: Double, type: TransformType, doubleFields: [String: Double], booleanFields: [String: Bool]) {
         self.id = id
         self.start = start
@@ -108,6 +109,7 @@ class TransformModel: Transform {
         self.booleanFields = booleanFields
     }
     
+    /// Creates a new Swift Data representation of the transform from the given transfer representation.
     init(transfer: TransformTransfer) {
         self.id = transfer.id
         self.start = transfer.start
@@ -117,6 +119,7 @@ class TransformModel: Transform {
         self.booleanFields = transfer.booleanFields
     }
     
+    /// Final position of the node after the transform.
     var endPosition: SCNVector3 {
         switch type {
         case .move:
@@ -130,6 +133,7 @@ class TransformModel: Transform {
         }
     }
     
+    /// Default transforms for given type.
     static func defaultModel(for type: TransformType) -> TransformModel {
         var doubleFields: [ String: Double ] = [:]
         var booleanFields: [ String: Bool ] = [:]
@@ -149,6 +153,7 @@ class TransformModel: Transform {
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
     }
     
+    /// Returns position at specific offset adjusted by this transform.
     func getPositionFor(playheadOffset offset: Double, currentPosition: SCNVector3, source: SCNVector3, mockT: Float? = nil) -> SCNVector3 {
         var t: Float
         
@@ -209,14 +214,22 @@ class TransformModel: Transform {
     }
 }
 
-struct TransformTransfer: Transform, Codable, Transferable {
+/// Transferable representation of a transform.
+struct TransformTransfer: Codable, Transferable {
+    /// Unique identifier.
     var id: UUID
+    /// Start displacment of the transfer on the display.
     var start: Double
+    /// On screen length of the transform.
     var length: Double
+    /// Type of the transform.
     var type: TransformType
+    /// Numeric properties of the transform.
     var doubleFields: [ String: Double ]
+    /// Boolean properties of the transform.
     var booleanFields: [ String: Bool ]
     
+    /// Creates a new transfer from a model.
     init(model: TransformModel) {
         id = model.id
         start = model.start
@@ -226,6 +239,7 @@ struct TransformTransfer: Transform, Codable, Transferable {
         booleanFields = model.booleanFields
     }
     
+    /// Transfer representation.
     static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .content)
     }

@@ -7,15 +7,22 @@
 
 import SwiftUI
 
+/// Current selected project view.
 struct ProjectView: View {
+    /// Current project.
     @Bindable var project: Project
     
+    /// Used for adjusting playhead and managing playback.
     @State private var playheadManager: PlayheadManager
+    /// Specifies whether user is editing transforms or audio files.
     @State private var editTransform = false
+    /// Transform the user is currently editing size.
     @State private var selectedTransform: TransformModel?
     
+    /// View model of the 3D editor.
     @StateObject var viewModel: EditorViewModel
     
+    /// Creates new project view.
     init(project: Project) {
         self.project = project
         let playheadMng = PlayheadManager(project: project)
@@ -78,7 +85,8 @@ struct ProjectView: View {
         }
     }
     
-    func transformPicker() -> some View {
+    /// Shows available transforms.
+    private func transformPicker() -> some View {
         VStack {
             Spacer()
             
@@ -97,7 +105,8 @@ struct ProjectView: View {
         }
     }
     
-    func playheadControls() -> ToolbarItemGroup<some View> {
+    /// Buttons responsible for managing the playhead.
+    private func playheadControls() -> ToolbarItemGroup<some View> {
         ToolbarItemGroup(placement: .secondaryAction) {
             Button {
                 playheadManager.jumpBackward()

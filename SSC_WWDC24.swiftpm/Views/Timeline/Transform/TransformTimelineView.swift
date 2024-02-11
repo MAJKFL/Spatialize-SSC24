@@ -7,18 +7,28 @@
 
 import SwiftUI
 
+/// Transform representation on the timeline.
 struct TransformTimelineView: View {
     @Environment(\.isEnabled) var isEnabled
+    /// Swift Data context.
     @Environment(\.modelContext) var context
+    /// Current project.
     @Bindable var project: Project
+    /// Node associated with this transform.
     @Bindable var node: Node
+    /// Transform represented by this view.
     @Bindable var transformModel: TransformModel
+    /// Transform the user is currently editing size.
     @Binding var selectedTransform: TransformModel?
+    /// Specifies whether to show the transform edit popover.
     @State private var showPopover = false
     
+    /// Difference used for adjusting left border of the transform.
     @State private var startPointChange: Double = 0
+    /// Difference used for adjusting right border of the transform.
     @State private var endPointChange: Double = 0
     
+    /// Specifies whether the transform is obstructed by a different transform.
     var isObstructed: Bool {
         node.transforms
             .contains(where: {

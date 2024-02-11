@@ -8,8 +8,12 @@
 import Foundation
 import CoreTransferable
 
+/// Used for importing audio files.
 struct AudioFile: Transferable {
+    /// File URL.
     let file: URL
+    
+    /// Transfer representation of the file.
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(contentType: .audio) {
             SentTransferredFile($0.file)
@@ -19,6 +23,7 @@ struct AudioFile: Transferable {
         }
     }
   
+    /// Copies file to the document directory.
     static func copyVideoFile(source: URL) throws -> URL {
         let audioDirectory = try FileManager.default.url(
             for: .documentDirectory, in: .userDomainMask,

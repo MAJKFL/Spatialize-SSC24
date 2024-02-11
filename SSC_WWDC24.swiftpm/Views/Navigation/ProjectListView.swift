@@ -1,22 +1,22 @@
 import SwiftUI
 import SwiftData
 
+/// Shows all projects of a user and manages navigation.
 struct ProjectListView: View {
+    /// Swift Data context.
     @Environment(\.modelContext) var modelContext
-    @Query(sort: [SortDescriptor(\Project.lastEdited)]) var projects: [Project]
+    /// Projects of the user.
+    @Query(sort: [SortDescriptor(\Project.dateCreated)]) var projects: [Project]
     
+    /// Project currently showed on the screen.
     @State private var selectedProject: Project?
+    /// Node currently edited by the user.
     @State private var selectedNode: Node?
     
-    @AppStorage("FirstLaunch") var firstLaunch = true
-    @State var showHelp = false
-    
-    let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ]
+    /// Determines whether this is the first launch of the app.
+    @AppStorage("FirstLaunch") private var firstLaunch = true
+    /// Shows the app manual.
+    @State private var showHelp = false
 
     var body: some View {
         NavigationView {
@@ -71,7 +71,8 @@ struct ProjectListView: View {
         }
     }
     
-    func addNewProject() {
+    /// Creates new project.
+    private func addNewProject() {
         let number = projects
             .map { $0.name }
             .filter { $0.contains("New Project") }
@@ -86,13 +87,15 @@ struct ProjectListView: View {
         modelContext.insert(Project(name: "New Project\(defaultProjectNameCount == 0 ? "" : " \(number + 1)")"))
     }
     
-    func deleteProject(_ offsets: IndexSet) {
+    /// Deletes project with swipe to delete.
+    private func deleteProject(_ offsets: IndexSet) {
         for index in offsets {
             modelContext.delete(projects[index])
         }
     }
     
-    func addFirstExampleProject() {
+    /// Adds first example project on the first launch.
+    private func addFirstExampleProject() {
         let exampleProject = Project(name: "Example Project 1")
         exampleProject.timeSignature = .ts44
         exampleProject.bpm = 73
@@ -148,14 +151,15 @@ struct ProjectListView: View {
         exampleProject.nodes = [n0, n1, n2, n3, n4, n5, n6]
     }
     
-    func addSecondExampleProject() {
+    /// Adds second example project on the first launch.
+    private func addSecondExampleProject() {
         let exampleProject = Project(name: "Example Project 2")
         exampleProject.timeSignature = .ts44
         exampleProject.bpm = 134
         
         modelContext.insert(exampleProject)
         
-        let n = Node(position: 0, name: "Single-Guitar", color: UIColor(#colorLiteral(red: 0, green: 0.631, blue: 0.847, alpha: 1)))
+        let n = Node(position: 0, name: "Guitar", color: UIColor(#colorLiteral(red: 0, green: 0.631, blue: 0.847, alpha: 1)))
         let track = Track(id: copyBundleFile(named: "Simple-Guitar"), fileName: "Simple-Guitar", ext: "mp3", trackLength: 37.61195011337868, start: 0.0)
         n.tracks.append(track)
         let transform1 = TransformModel(start: 0.0, length: 720.0, type: .move, doubleFields: ["z": -27.0, "x": -43.0, "y": 33.0], booleanFields: ["interp": true])
@@ -168,6 +172,7 @@ struct ProjectListView: View {
         exampleProject.nodes.append(n)
     }
     
+    /// Copies files of the example projects.
     private func copyBundleFile(named name: String) -> UUID {
         let url = Bundle.main.url(forResource: name, withExtension: "mp3")!
         

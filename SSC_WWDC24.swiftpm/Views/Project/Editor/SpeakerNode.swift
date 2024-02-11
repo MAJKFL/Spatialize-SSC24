@@ -9,10 +9,14 @@ import SceneKit
 import PHASE
 
 class SpeakerNode: SCNNode {
+    /// Speaker node model.
     var nodeModel: Node!
+    /// Engine used for playback.
     var phaseEngine: PHASEEngine!
+    /// Source of the speaker
     var phaseSource: PHASESource!
     
+    /// Creates a new speaker.
     init(nodeModel: Node, phaseEngine: PHASEEngine, phaseSource: PHASESource) {
         super.init()
         self.nodeModel = nodeModel
@@ -42,6 +46,7 @@ class SpeakerNode: SCNNode {
         fatalError("init(coder:) has not been implemented")
     }
     
+    /// Updates position of the speaker node in the 3D editor and engine.
     func updatePosition(playheadOffset offset: Double, nodePosition: Int) {
         let previousTransform = nodeModel.transforms
             .filter { trans in

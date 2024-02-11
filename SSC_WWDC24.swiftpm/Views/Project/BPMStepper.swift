@@ -7,9 +7,12 @@
 
 import SwiftUI
 
+/// Shows stepper used for selecting BPM.
 struct BPMStepper: View {
+    /// Specifies whether the stepper is enabled
     @Environment(\.isEnabled) var isEnabled
     
+    /// Current project.
     @Bindable var project: Project
     
     var body: some View {

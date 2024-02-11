@@ -9,12 +9,17 @@ import SwiftUI
 import SceneKit
 import Combine
 
+/// SwiftUI view of the 3D editor.
 struct EditorView: View {
+    /// Current project.
     @Bindable var project: Project
+    /// Used for adjusting playhead and managing playback.
     @State var playheadManager: PlayheadManager
     
+    /// View model of the 3D editor.
     @ObservedObject var viewModel: EditorViewModel
     
+    /// Specifies whether playhead was moved outside of playback and the files have to be seeked accordingly.
     @State private var shouldSeek = true
     
     var body: some View {

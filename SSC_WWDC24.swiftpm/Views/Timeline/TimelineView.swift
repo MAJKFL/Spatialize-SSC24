@@ -8,14 +8,20 @@
 import SwiftUI
 import Combine
 
+/// Displays all speaker nodes with their associated tracks and transforms.
 struct TimelineView: View {
+    /// Current project.
     @Bindable var project: Project
+    /// Used for adjusting playhead and managing playback.
     @State var playheadManager: PlayheadManager
     
+    /// Transform the user is currently editing size.
     @Binding var selectedTransform: TransformModel?
+    /// Specifies whether user is editing transforms or audio files.
     let editTransform: Bool
     
-    var numberOfBeats: Int {
+    /// Current number of beats displayed by the timeline.
+    private var numberOfBeats: Int {
         let lastTrackEnd = project.nodes
             .flatMap { $0.tracks }
             .map { getEndFor(track: $0) }
@@ -28,7 +34,8 @@ struct TimelineView: View {
         }
     }
     
-    let colors = [
+    /// Colors used for new nodes.
+    private let colors = [
         UIColor(#colorLiteral(red: 0, green: 0.631, blue: 0.847, alpha: 1)),
         UIColor(#colorLiteral(red: 0.004, green: 0.38, blue: 0.996, alpha: 1)),
         UIColor(#colorLiteral(red: 0.298, green: 0.133, blue: 0.698, alpha: 1)),
@@ -48,7 +55,7 @@ struct TimelineView: View {
             ZStack(alignment: .leading) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack(alignment: .top) {
-                        HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
+                        LazyHStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
                             ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
                                 VStack {
                                     Rectangle()
@@ -91,7 +98,8 @@ struct TimelineView: View {
         }
     }
     
-    func nodeList() -> some View {
+    /// Left hand list of speaker nodes.
+    private func nodeList() -> some View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
                 VStack {
@@ -123,10 +131,11 @@ struct TimelineView: View {
         .animation(.easeIn(duration: 0.2), value: project.nodes)
     }
     
-    func beatLabels() -> some View {
+    /// Sticky beat labels on top of the timeline.
+    private func beatLabels() -> some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
+                LazyHStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
                     ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
                         VStack {
                             Text(getBeatStr(x))
@@ -161,7 +170,8 @@ struct TimelineView: View {
         }
     }
     
-    func tracks() -> some View {
+    /// Audio files associated with speaker nodes.
+    private func tracks() -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
                 ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
@@ -178,7 +188,8 @@ struct TimelineView: View {
         .padding(.leading, 4)
     }
     
-    func playhead() -> some View {
+    /// The main playhead of the editor.
+    private func playhead() -> some View {
         HStack {
             Rectangle()
             .fill(.primary)
@@ -190,14 +201,17 @@ struct TimelineView: View {
         .padding(.leading, 4)
     }
     
+    /// Returns the on devide coordinate of the track end.
     func getEndFor(track: Track) -> Double {
         Constants.trackWidth(track, bpm: project.bpm) + track.start
     }
     
+    /// Returns the string representation of the beat number.
     func getBeatStr(_ x: Int) -> String {
         return String(x / project.timeSignature.firstDigit) + "." + String(x % project.timeSignature.firstDigit + 1)
     }
     
+    /// Creates a new node.
     func addNewNode() {
         let number = project.nodes
             .map { $0.name }

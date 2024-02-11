@@ -7,7 +7,9 @@
 
 import SceneKit
 
+/// Scene view of the 3D editor
 class EditorSceneView: SCNView {
+    /// Creates a new scene view for specified view model
     func setup(viewModel: EditorViewModel) {
         let scene = EditorScene()
         self.scene = scene
@@ -20,5 +22,6 @@ class EditorSceneView: SCNView {
         self.addGestureRecognizer(pinchRecognizer)
     }
     
+    /// Used to disable pinching.
     @objc func pinchGesture(_ sender: UIPinchGestureRecognizer) {}
 }

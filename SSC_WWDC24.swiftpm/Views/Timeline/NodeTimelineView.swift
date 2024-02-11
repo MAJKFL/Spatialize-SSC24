@@ -9,13 +9,20 @@ import SwiftUI
 import AVFoundation
 import SceneKit
 
+/// Represents audio files and transforms associated with a node on the timeline.
 struct NodeTimelineView: View {
+    /// Swift Data context.
     @Environment(\.modelContext) var context
+    
+    /// Current project.
     @Bindable var project: Project
+    /// Node represented by this timeline.
     @Bindable var node: Node
     
+    /// Transform the user is currently editing size.
     @Binding var selectedTransform: TransformModel?
     
+    /// Specifies whether user is editing transforms or audio files.
     let editTransform: Bool
     
     var body: some View {
@@ -79,6 +86,7 @@ struct NodeTimelineView: View {
         }
     }
     
+    /// Used for changing position and creating transforms.
     private func handleTransformDrop(_ transfer: TransformTransfer, at location: CGPoint) {
         let transform = TransformModel(transfer: transfer)
         
@@ -94,6 +102,7 @@ struct NodeTimelineView: View {
         node.transforms.sort(by: { $0.start > $1.start })
     }
     
+    /// Used for importing audio files and rearranging them.
     private func handleFileDrop(_ url: URL, at location: CGPoint) {
         if let otherNode = project.nodes.first(where: { $0.tracks.contains(where: { $0.fileURL == url }) }),
            let otherTrack = otherNode.tracks.first(where: { $0.fileURL == url }) {

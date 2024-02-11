@@ -8,12 +8,17 @@
 import SwiftUI
 import SceneKit
 
+/// Popover used for editing a transform.
 struct TransformEditView: View {
+    /// Current project.
     let project: Project
+    /// Node associated with this transform.
     let node: Node
+    /// Transform edited by this view.
     @Bindable var transformModel: TransformModel
     
-    let transformPreviewNode: SCNNode = {
+    /// Node used in the 3D preview.
+    private let transformPreviewNode: SCNNode = {
         let node = SCNNode()
         
         let sphereGeometry = SCNSphere(radius: 3)
@@ -32,7 +37,8 @@ struct TransformEditView: View {
         return node
     }()
     
-    let transformPathPreviewNodes: [SCNNode] = {
+    /// Nodes that create the path that describes the transform movement.
+    private let transformPathPreviewNodes: [SCNNode] = {
         var nodes = [SCNNode]()
         
         for i in 0..<100 {
@@ -44,7 +50,8 @@ struct TransformEditView: View {
         return nodes
     }()
     
-    let radiusBox: SCNNode = {
+    /// Box that represents the radius of the random transform.
+    private let radiusBox: SCNNode = {
         let node = SCNNode()
         
         let geometry = SCNBox()
@@ -60,11 +67,14 @@ struct TransformEditView: View {
         return node
     }()
     
+    /// Offset of the mock playhead.
     @State private var mockPlayheadOffset: Double = 0
     
-    let timer = Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()
+    /// Timer used for offsetting the mock playhead.
+    private let timer = Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()
     
-    var startPosition: SCNVector3 {
+    /// Start position of the mock speaker node.
+    private var startPosition: SCNVector3 {
         let previousTransform = node.transforms
             .filter { trans in
                 trans.start + trans.length < transformModel.start
@@ -136,7 +146,8 @@ struct TransformEditView: View {
         .tint(node.color)
     }
     
-    func updatePathPreview() {
+    /// Updates preview path.
+    private func updatePathPreview() {
         if transformModel.type != .random {
             for i in 0..<100 {
                 let node = transformPathPreviewNodes[i]
@@ -160,7 +171,8 @@ struct TransformEditView: View {
         }
     }
     
-    func lineBetween(vector vector1: SCNVector3, toVector vector2: SCNVector3) -> SCNGeometry {
+    /// Creates a line between two points.
+    private func lineBetween(vector vector1: SCNVector3, toVector vector2: SCNVector3) -> SCNGeometry {
         let indices: [Int32] = [0, 1]
         let source = SCNGeometrySource(vertices: [vector1, vector2])
         let element = SCNGeometryElement(indices: indices, primitiveType: .line)
@@ -168,6 +180,7 @@ struct TransformEditView: View {
     }
 }
 
+/// Edit menu for the random transform.
 struct RandomTransformParameterEditView: View {
     @Bindable var transformModel: TransformModel
     
@@ -216,7 +229,9 @@ struct RandomTransformParameterEditView: View {
     }
 }
 
+/// Edit menu for the spiral transform.
 struct SpiralTransformParameterEditView: View {
+    /// Transform edited by this view.
     @Bindable var transformModel: TransformModel
     
     var body: some View {
@@ -304,7 +319,9 @@ struct SpiralTransformParameterEditView: View {
     }
 }
 
+/// Edit menu for the orbit transform.
 struct OrbitTransformParameterEditView: View {
+    /// Transform edited by this view.
     @Bindable var transformModel: TransformModel
     
     var body: some View {
@@ -392,7 +409,9 @@ struct OrbitTransformParameterEditView: View {
     }
 }
 
+/// Edit menu for the move transform.
 struct MoveTransformParameterEditView: View {
+    /// Transform edited by this view.
     @Bindable var transformModel: TransformModel
     
     var body: some View {
