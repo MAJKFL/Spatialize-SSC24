@@ -12,10 +12,14 @@ struct TransformView: View {
     /// Transform represented by this view.
     @Bindable var transformModel: TransformModel
     
+    @State private var showPreview = false
+    
     /// Indicates whether the transform is obstructed by a different transform.
     var isObstructed = false
     /// Specifies whether the view should be a template.
     var isTemplate = false
+    
+    var backgroundColor = Color.gray
     
     /// Rows used for displaying the transform properties.
     private let rows = [GridItem(.flexible()), GridItem(.flexible())]
@@ -27,26 +31,42 @@ struct TransformView: View {
                 
                 HStack(spacing: 5) {
                     Image(systemName: transformModel.type.iconName)
+                        .foregroundStyle(.white)
+                        .bold()
                     
                     Text(transformModel.type.displayName)
+                        .foregroundStyle(.white)
+                        .bold()
+                    
+                    if isTemplate {
+                        Spacer()
+                        
+                        Button {
+                            showPreview.toggle()
+                        } label: {
+                            Image(systemName: "info.circle")
+                        }
+                        .popover(isPresented: $showPreview) {
+                            TransformPreviewView(project: nil, node: nil, transformModel: transformModel, isEditable: false)
+                                .frame(width: 600, height: 550)
+                        }
+                    }
                 }
                 .font(.title2)
-                .bold()
                 .offset(x: getHeaderOffset(from: geo))
                 
                 Spacer()
             }
         }
-        .padding(.leading, 10)
-        .foregroundStyle(.white)
+        .padding(.horizontal, 10)
         .frame(width: transformModel.length)
         .mask {
             Rectangle()
         }
         .background {
             RoundedRectangle(cornerRadius: 10)
-                .fill(isObstructed ? Color.red.opacity(0.7) : Color.gray.opacity(0.7))
-                .strokeBorder(Color.gray, lineWidth: 3)
+                .fill(isObstructed ? Color.red.opacity(0.5) : backgroundColor.opacity(0.5))
+                .strokeBorder(backgroundColor, lineWidth: 3)
         }
         .draggable(TransformTransfer(model: transformModel)) {
             Image(systemName: transformModel.type.iconName)

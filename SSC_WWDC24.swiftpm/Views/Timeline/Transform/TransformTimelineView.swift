@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Transform representation on the timeline.
 struct TransformTimelineView: View {
+    @Environment(\.self) var environment
     /// Swift Data context.
     @Environment(\.modelContext) var context
     /// Current project.
@@ -36,8 +37,14 @@ struct TransformTimelineView: View {
             })
     }
     
+    var selectionBorderColor: Color {
+        let components = node.color.resolve(in: environment)
+        
+        return Color(red: 1 - Double(components.red), green: 1 - Double(components.green), blue: 1 - Double(components.blue))
+    }
+    
     var body: some View {
-        TransformView(transformModel: transformModel, isObstructed: isObstructed)
+        TransformView(transformModel: transformModel, isObstructed: isObstructed, backgroundColor: node.color)
             .overlay {
                 VStack {
                     HStack {
@@ -51,8 +58,8 @@ struct TransformTimelineView: View {
                             .background(Material.thick)
                             .clipShape(getEditRect(from: geo))
                             .popover(isPresented: $showPopover) {
-                                TransformEditView(project: project, node: node, transformModel: transformModel)
-                                    .frame(width: 600, height: 800)
+                                TransformPreviewView(project: project, node: node, transformModel: transformModel)
+                                    .frame(width: 500, height: 700)
                             }
                             .offset(x: getEditOffsetX(from: geo) + 0.1, y: getEditOffsetY(from: geo))
                         }
@@ -66,12 +73,12 @@ struct TransformTimelineView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(.clear)
-                        .strokeBorder(selectedTransform?.id == transformModel.id ? Color.accentColor : .clear, lineWidth: 3)
+                        .strokeBorder(selectedTransform?.id == transformModel.id ? selectionBorderColor : .clear, lineWidth: 3)
                     
                     if selectedTransform?.id == transformModel.id {
                         HStack {
                             Circle()
-                                .fill(Color.accentColor)
+                                .fill(selectionBorderColor)
                                 .frame(width: 12, height: 12)
                                 .offset(x: -4.5)
                                 .gesture(
@@ -84,7 +91,7 @@ struct TransformTimelineView: View {
                             Spacer()
                             
                             Circle()
-                                .fill(Color.accentColor)
+                                .fill(selectionBorderColor)
                                 .frame(width: 12, height: 12)
                                 .offset(x: 4.5)
                                 .gesture(

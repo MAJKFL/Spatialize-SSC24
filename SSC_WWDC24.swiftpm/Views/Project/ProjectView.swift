@@ -45,7 +45,7 @@ struct ProjectView: View {
             }
             
             TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform)
-                .frame(height: 350)
+                .frame(height: 400)
         }
         .navigationTitle(project.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -86,7 +86,7 @@ struct ProjectView: View {
                 ForEach(TransformType.allCases, id: \.self) { type in
                     TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)
                         .frame(height: Constants.nodeViewHeight / 2)
-                        .padding()
+                        .padding([.horizontal, .top])
                 }
             }
         }

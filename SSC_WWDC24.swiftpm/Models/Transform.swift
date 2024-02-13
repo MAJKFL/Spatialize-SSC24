@@ -45,19 +45,36 @@ enum TransformType: String, CaseIterable, Codable {
     }
     
     /// Description associated with the transform type.
-    var displayDescription: LocalizedStringKey {
+    var displayDescription: String {
         switch self {
         case .move:
             """
             This transform moves the node to the specified coordinates.
-            Parameters:
+            """
+        case .orbit:
+            """
+            This transform moves the node circularly around the origin.
+            """
+        case .spiral:
+            """
+            This transform moves the node circularly around the origin, towards the end point, with smaller radius over time.
+            """
+        case .random:
+            """
+            This transform moves the node to random points withing the specified cube radius.
+            """
+        }
+    }
+    
+    var parameterDescription: LocalizedStringKey {
+        switch self {
+        case .move:
+            """
             - **x**, **y**, **z** - Destination point components
             - **Interpolate** - Indicate whether to linearly interpolate between source and destination
             """
         case .orbit:
             """
-            This transform moves the node circularly around the origin.
-            Parameters:
             - **h** - Base height of the node
             - **r** - Radius of the orbit
             - **rev** - Number of revolutions
@@ -65,8 +82,6 @@ enum TransformType: String, CaseIterable, Codable {
             """
         case .spiral:
             """
-            This transform moves the node circularly around the origin, towards the end point, with smaller radius over time.
-            Parameters:
             - **hStart** - Starting height of the node
             - **hEnd** - Finish height of the node
             - **rev** - Number of revolutions
@@ -74,8 +89,6 @@ enum TransformType: String, CaseIterable, Codable {
             """
         case .random:
             """
-            This transform moves the node to random points withing the specified cube radius.
-            Parameters:
             - **r** - Radius of the cube
             - **freq** - How many times should transform randomly change the node's position
             """
@@ -140,7 +153,7 @@ class TransformModel {
         
         switch type {
         case .move:
-            doubleFields = ["x": 0, "y": 20, "z": 0]
+            doubleFields = ["x": 20, "y": 20, "z": 20]
             booleanFields = ["interp": true]
         case .orbit:
             doubleFields = ["height": 30, "radius": 25, "rev": 1, "hMod": 0]

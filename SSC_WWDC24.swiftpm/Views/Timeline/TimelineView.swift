@@ -94,7 +94,7 @@ struct TimelineView: View {
                     .background(.thickMaterial)
                     .padding(.top, 40)
             }
-            .frame(minHeight: 380)
+            .frame(minHeight: 420)
         }
         .ignoresSafeArea()
         .onChange(of: playheadManager.offset) { oldValue, newValue in
@@ -109,13 +109,12 @@ struct TimelineView: View {
     
     /// Left hand list of speaker nodes.
     private func nodeList() -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 10) {
             ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
                 VStack {
                     NodeListRowView(project: project, node: node)
                     
                     Divider()
-                        .padding(.bottom, 2.5)
                 }
                 .frame(height: Constants.nodeViewHeight)
             }
@@ -181,7 +180,7 @@ struct TimelineView: View {
     /// Audio files associated with speaker nodes.
     private func tracks() -> some View {
         HStack {
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 10) {
                 ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
                     NodeTimelineView(project: project, node: node, selectedTransform: $selectedTransform)
                         .frame(height: Constants.nodeViewHeight)
