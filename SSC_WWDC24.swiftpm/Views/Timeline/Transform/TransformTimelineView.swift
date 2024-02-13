@@ -9,7 +9,6 @@ import SwiftUI
 
 /// Transform representation on the timeline.
 struct TransformTimelineView: View {
-    @Environment(\.isEnabled) var isEnabled
     /// Swift Data context.
     @Environment(\.modelContext) var context
     /// Current project.
@@ -44,25 +43,20 @@ struct TransformTimelineView: View {
                     HStack {
                         Spacer()
                         
-                        if isEnabled {
+                        GeometryReader { geo in
                             Button("Edit") {
                                 showPopover.toggle()
                             }
                             .padding(5)
                             .background(Material.thick)
-                            .clipShape(
-                                .rect(
-                                    topLeadingRadius: 0,
-                                    bottomLeadingRadius: 5,
-                                    bottomTrailingRadius: 0,
-                                    topTrailingRadius: 9.5
-                                )
-                            )
+                            .clipShape(getEditRect(from: geo))
                             .popover(isPresented: $showPopover) {
                                 TransformEditView(project: project, node: node, transformModel: transformModel)
                                     .frame(width: 600, height: 800)
                             }
+                            .offset(x: getEditOffsetX(from: geo) + 0.1, y: getEditOffsetY(from: geo))
                         }
+                        .frame(width: 39.8, height: 20)
                     }
                     
                     Spacer()
@@ -72,7 +66,7 @@ struct TransformTimelineView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(.clear)
-                        .strokeBorder(selectedTransform?.id == transformModel.id && isEnabled ? Color.accentColor : .clear, lineWidth: 3)
+                        .strokeBorder(selectedTransform?.id == transformModel.id ? Color.accentColor : .clear, lineWidth: 3)
                     
                     if selectedTransform?.id == transformModel.id {
                         HStack {
@@ -136,5 +130,59 @@ struct TransformTimelineView: View {
                     }
                 }
             }
+    }
+    
+    private func getEditOffsetX(from geo: GeometryProxy) -> Double {
+        let offset =  UIScreen.main.bounds.size.width - geo.frame(in: .global).maxX - 10
+        
+        guard offset < 0 else { return 0 }
+        
+        if offset > -transformModel.length + 175 {
+            return offset
+        } else {
+            return -transformModel.length + 175
+        }
+    }
+    
+    private func getEditOffsetY(from geo: GeometryProxy) -> Double {
+        let offset = UIScreen.main.bounds.size.width - geo.frame(in: .global).maxX - 10
+        
+        if offset < 0 && offset > -30 {
+            let t = -offset / 240.0
+            
+            return Constants.nodeViewHeight * t
+        } else if offset <= -30 {
+            return Constants.nodeViewHeight / 8
+        } else {
+            return 0
+        }
+    }
+    
+    private func getEditRect(from geo: GeometryProxy) -> UnevenRoundedRectangle {
+        var topLeading: Double = 0
+        let bottomLeading: Double = 5
+        var bottomTrailing: Double = 0
+        var topTrailing: Double = 9
+        
+        let offset = UIScreen.main.bounds.size.width - geo.frame(in: .global).maxX - 10
+        
+        if offset < 0 && offset > -30 {
+            let t = -offset / 30.0
+            
+            topLeading = 5 * t
+            bottomTrailing = topLeading
+            topTrailing = 9.5 - topLeading
+        } else if offset <= -30 {
+            topLeading = 5
+            bottomTrailing = 5
+            topTrailing = 5
+        }
+        
+        return .rect(
+            topLeadingRadius: topLeading,
+            bottomLeadingRadius: bottomLeading,
+            bottomTrailingRadius: bottomTrailing,
+            topTrailingRadius: topTrailing
+        )
     }
 }

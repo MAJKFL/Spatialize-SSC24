@@ -57,10 +57,9 @@ struct NodeTimelineView: View {
                         }
                     }
                 }
-//                .frame(height: Constants.nodeViewHeight / 2)
+                .frame(height: Constants.nodeViewHeight / 2)
                 
                 ZStack {
-                    
                     ForEach(node.tracks) { track in
                         HStack {
                             TrackTimelineView(project: project, node: node, track: track)
@@ -80,7 +79,7 @@ struct NodeTimelineView: View {
                         }
                     }
                 }
-//                .frame(height: Constants.nodeViewHeight / 2)
+                .frame(height: Constants.nodeViewHeight / 2)
             }
         }
     }
@@ -137,19 +136,5 @@ enum TimelineDropItem: Transferable {
     static var transferRepresentation: some TransferRepresentation {
         ProxyRepresentation { TimelineDropItem.audio($0) }
         ProxyRepresentation { TimelineDropItem.transform($0) }
-    }
-    
-    var transform: TransformTransfer? {
-        switch self {
-            case .transform(let tran): return tran
-            default: return nil
-        }
-    }
-    
-    var audio: AudioFile? {
-        switch self {
-            case.audio(let a): return a
-            default: return nil
-        }
     }
 }
