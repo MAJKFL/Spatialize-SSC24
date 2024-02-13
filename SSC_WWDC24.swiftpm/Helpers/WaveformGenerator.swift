@@ -60,7 +60,7 @@ class WaveGenerator {
         context.setLineWidth(1.5)
 
         let max: CGFloat = CGFloat(samples.max() ?? 0)
-        let heightNormalizationFactor = imageSize.height / max / 2
+        let heightNormalizationFactor = imageSize.height / max / 2.5
         let widthNormalizationFactor = imageSize.width / CGFloat(samples.count)
         for index in stride(from: 0, through: samples.count, by: 50) {
             let pixel = CGFloat(samples[index]) * heightNormalizationFactor

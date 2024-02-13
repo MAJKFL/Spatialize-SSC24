@@ -36,7 +36,7 @@ struct TrackTimelineView: View {
             if let waveformImage {
                 waveformImage
                     .resizable()
-                    .frame(width: Constants.trackWidth(track, bpm: project.bpm), height: Constants.nodeViewHeight)
+                    .frame(width: Constants.trackWidth(track, bpm: project.bpm))
                     .opacity(0.8)
                     .background {
                         ZStack {
@@ -70,7 +70,6 @@ struct TrackTimelineView: View {
             } else {
                 Rectangle()
                     .fill(.clear)
-                    .frame(height: Constants.nodeViewHeight)
             }
         }
         .onAppear {

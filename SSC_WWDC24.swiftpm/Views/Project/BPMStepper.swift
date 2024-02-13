@@ -26,6 +26,7 @@ struct BPMStepper: View {
                     Color.blue.opacity(0.1)
                 }
                 .contentTransition(.numericText())
+                .animation(.spring, value: project.bpm)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }

@@ -10,7 +10,7 @@ import Foundation
 /// Constants commonly used in the app.
 class Constants {
     /// Speaker node timeline row height.
-    static let nodeViewHeight: Double = 80
+    static let nodeViewHeight: Double = 120
     /// Full beat width.
     static let fullBeatWidth: Double = 60
     /// Full vertical beat marker width.
@@ -26,19 +26,9 @@ class Constants {
         fullBeatMarkerWidth / distanceMultiplierFor(timeSignature: timeSignature)
     }
     
-    /// Beat width adjusted for time signature.
-    static func singleBeatWidthFor(timeSignature: TimeSignature) -> Double {
-        timeSignature.secondDigit == 4 ? fullBeatWidth : fullBeatWidth / 2
-    }
-    
     /// Distance multiplier for time signature.
     static func distanceMultiplierFor(timeSignature: TimeSignature) -> Double {
         Double(timeSignature.secondDigit / 4)
-    }
-    
-    /// Padding added to the leading edge of the timeline.
-    static func timelineLeadingPaddingFor(timeSignature: TimeSignature) -> Double {
-        timeSignature.secondDigit == 4 ? 0 : 2
     }
     
     /// Number of beats for maximum track length and time signature

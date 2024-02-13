@@ -17,8 +17,6 @@ struct TimelineView: View {
     
     /// Transform the user is currently editing size.
     @Binding var selectedTransform: TransformModel?
-    /// Specifies whether user is editing transforms or audio files.
-    let editTransform: Bool
     
     /// Current number of beats displayed by the timeline.
     private var numberOfBeats: Int {
@@ -52,7 +50,18 @@ struct TimelineView: View {
     
     var body: some View {
         ScrollView {
-            ZStack(alignment: .leading) {
+            ZStack(alignment: .topLeading) {
+                Rectangle()
+                    .fill(.ultraThickMaterial)
+                    .frame(width: 250, height: 40)
+                    .overlay {
+                        VStack {
+                            Spacer()
+                            
+                            Divider()
+                        }
+                    }
+                
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack(alignment: .top) {
                         LazyHStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
@@ -67,17 +76,17 @@ struct TimelineView: View {
                             
                             Spacer()
                         }
-                        .padding(.leading, Constants.timelineLeadingPaddingFor(timeSignature: project.timeSignature))
-                        .padding(.leading, 250)
+                        .padding(.leading, 18)
                         
                         tracks()
-                            .padding(.leading, 250)
+                            .padding(.leading, 18)
                         
                         playhead()
-                            .padding(.leading, 250)
+                            .padding(.leading, 18)
                         
                         beatLabels()
                     }
+                    .padding(.leading, 250)
                 }
                 
                 nodeList()
@@ -163,8 +172,7 @@ struct TimelineView: View {
                     .offset(x: playheadManager.offset)
             }
             .frame(height: 40)
-            .padding(.leading, Constants.timelineLeadingPaddingFor(timeSignature: project.timeSignature))
-            .padding(.leading, 250)
+            .padding(.leading, 18)
             .background(.thickMaterial)
             .offset(y: geo.frame(in: .scrollView(axis: .vertical)).minY < 0 ? -geo.frame(in: .scrollView(axis: .vertical)).minY : 0)
         }
@@ -175,7 +183,7 @@ struct TimelineView: View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
                 ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
-                    NodeTimelineView(project: project, node: node, selectedTransform: $selectedTransform, editTransform: editTransform)
+                    NodeTimelineView(project: project, node: node, selectedTransform: $selectedTransform)
                         .frame(height: Constants.nodeViewHeight)
                 }
                 

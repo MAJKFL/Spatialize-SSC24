@@ -22,66 +22,65 @@ struct NodeTimelineView: View {
     /// Transform the user is currently editing size.
     @Binding var selectedTransform: TransformModel?
     
-    /// Specifies whether user is editing transforms or audio files.
-    let editTransform: Bool
-    
     var body: some View {
         ZStack {
-            if !editTransform {
-                Color.secondary
-                    .opacity(0.05)
-                    .frame(height: Constants.nodeViewHeight)
-                    .dropDestination(for: AudioFile.self) { items, location in
-                        guard let item = items.first else { return false }
-                        
-                        handleFileDrop(item.file, at: location)
-                        
-                        return true
+            Color.secondary
+                .opacity(0.05)
+                .dropDestination(for: TimelineDropItem.self) { items, location in
+                    guard let item = items.first else { return false }
+                    
+                    switch item {
+                    case .audio(let audio):
+                        handleFileDrop(audio.file, at: location)
+                    case .transform(let transform):
+                        handleTransformDrop(transform, at: location)
+                    default:
+                        return false
                     }
-            }
+                    
+                    return true
+                }
             
-            ForEach(node.tracks) { track in
-                HStack {
-                    TrackTimelineView(project: project, node: node, track: track)
-                        .offset(x: track.start)
-                        .draggable(AudioFile(file: track.fileURL)) {
-                            Image(systemName: "waveform")
-                                .foregroundStyle(Color.white)
-                                .font(.largeTitle)
-                                .padding()
-                                .background {
-                                    node.color.opacity(0.8)
-                                }
-                                .clipShape(RoundedRectangle(cornerRadius: 5))
+            Color.secondary
+                .opacity(0.1)
+                .frame(height: 1)
+            
+            VStack(spacing: 0) {
+                ZStack {
+                    ForEach(node.transforms) { transformModel in
+                        HStack {
+                            TransformTimelineView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform)
+                                .offset(x: transformModel.start)
+                            
+                            
+                            Spacer()
                         }
-                        .disabled(editTransform)
-                    
-                    Spacer()
-                }
-            }
-            
-            if editTransform {
-                Color.secondary
-                    .opacity(0.05)
-                    .frame(height: Constants.nodeViewHeight)
-                    .dropDestination(for: TransformTransfer.self) { items, location in
-                        guard let item = items.first else { return false }
-                        
-                        handleTransformDrop(item, at: location)
-                        
-                        return true
                     }
-            }
-            
-            ForEach(node.transforms) { transformModel in
-                HStack {
-                    TransformTimelineView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform)
-                        .offset(x: transformModel.start)
-                        .disabled(!editTransform)
-                    
-                    
-                    Spacer()
                 }
+//                .frame(height: Constants.nodeViewHeight / 2)
+                
+                ZStack {
+                    
+                    ForEach(node.tracks) { track in
+                        HStack {
+                            TrackTimelineView(project: project, node: node, track: track)
+                                .offset(x: track.start)
+                                .draggable(AudioFile(file: track.fileURL)) {
+                                    Image(systemName: "waveform")
+                                        .foregroundStyle(Color.white)
+                                        .font(.largeTitle)
+                                        .padding()
+                                        .background {
+                                            node.color.opacity(0.8)
+                                        }
+                                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                                }
+                            
+                            Spacer()
+                        }
+                    }
+                }
+//                .frame(height: Constants.nodeViewHeight / 2)
             }
         }
     }
@@ -126,6 +125,31 @@ struct NodeTimelineView: View {
                               start: location.x - location.x.truncatingRemainder(dividingBy: Constants.fullBeatWidth / 4))
             
             node.tracks.append(track)
+        }
+    }
+}
+
+enum TimelineDropItem: Transferable {
+    case none
+    case transform(TransformTransfer)
+    case audio(AudioFile)
+    
+    static var transferRepresentation: some TransferRepresentation {
+        ProxyRepresentation { TimelineDropItem.audio($0) }
+        ProxyRepresentation { TimelineDropItem.transform($0) }
+    }
+    
+    var transform: TransformTransfer? {
+        switch self {
+            case .transform(let tran): return tran
+            default: return nil
+        }
+    }
+    
+    var audio: AudioFile? {
+        switch self {
+            case.audio(let a): return a
+            default: return nil
         }
     }
 }

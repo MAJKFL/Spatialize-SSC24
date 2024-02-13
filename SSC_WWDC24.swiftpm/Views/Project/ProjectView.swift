@@ -14,8 +14,6 @@ struct ProjectView: View {
     
     /// Used for adjusting playhead and managing playback.
     @State private var playheadManager: PlayheadManager
-    /// Specifies whether user is editing transforms or audio files.
-    @State private var editTransform = false
     /// Transform the user is currently editing size.
     @State private var selectedTransform: TransformModel?
     
@@ -33,35 +31,25 @@ struct ProjectView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                EditorView(project: project, playheadManager: playheadManager, viewModel: viewModel)
+                Color.black
                 
-                transformPicker()
-            }
-            
-            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
-                .frame(height: 350)
-        }
-        .toolbarRole(.editor)
-        .navigationTitle(project.name)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    withAnimation(.spring(duration: 0.15)) {
-                        editTransform.toggle()
-                        
-                        if !editTransform {
-                            selectedTransform = nil
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: editTransform ? "waveform" : "arrow.triangle.swap")
-                        
-                        Text(editTransform ? "Audio" : "Transform")
-                    }
+                HStack(spacing: 0) {
+                    transformPicker()
+                    
+                    Color.secondary
+                        .opacity(0.7)
+                        .frame(width: 2)
+                    
+                    EditorView(project: project, playheadManager: playheadManager, viewModel: viewModel)
                 }
             }
             
+            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform)
+                .frame(height: 350)
+        }
+        .navigationTitle(project.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
             playheadControls()
             
             ToolbarItem(placement: .topBarTrailing) {
@@ -87,20 +75,19 @@ struct ProjectView: View {
     
     /// Shows available transforms.
     private func transformPicker() -> some View {
-        VStack {
-            Spacer()
-            
-            if editTransform {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 0) {
-                        ForEach(TransformType.allCases, id: \.self) { type in
-                            TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)
-                                .shadow(radius: 7)
-                                .padding()
-                        }
-                    }
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Transforms")
+                    .font(.title)
+                    .bold()
+                    .foregroundStyle(.white)
+                    .padding([.leading, .top])
+                
+                ForEach(TransformType.allCases, id: \.self) { type in
+                    TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)
+                        .frame(height: Constants.nodeViewHeight / 2)
+                        .padding()
                 }
-                .background(.thinMaterial)
             }
         }
     }

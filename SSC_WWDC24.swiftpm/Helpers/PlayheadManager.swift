@@ -70,14 +70,14 @@ class PlayheadManager {
     
     /// Moves playhead one beat forward.
     func jumpForward() {
-        let beatWidth = Constants.singleBeatWidthFor(timeSignature: project.timeSignature)
+        let beatWidth = Constants.fullBeatWidth
         offset += beatWidth
         offset -= offset.truncatingRemainder(dividingBy: beatWidth)
     }
     
     /// Moves playhead one beat before.
     func jumpBackward() {
-        let beatWidth = Constants.singleBeatWidthFor(timeSignature: project.timeSignature)
+        let beatWidth = Constants.fullBeatWidth
         if offset >= beatWidth {
             offset -= beatWidth
         }
@@ -88,7 +88,7 @@ class PlayheadManager {
     /// Moves playhead to the specified beat.
     func jumpTo(_ beatNumber: Int) {
         let beatIndex = beatNumber - project.timeSignature.firstDigit
-        offset = Double(beatIndex) * Constants.singleBeatWidthFor(timeSignature: project.timeSignature)
+        offset = Double(beatIndex) * Constants.fullBeatWidth
     }
     
     /// Removes display link.

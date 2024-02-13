@@ -55,7 +55,7 @@ struct TransformTimelineView: View {
                                     topLeadingRadius: 0,
                                     bottomLeadingRadius: 5,
                                     bottomTrailingRadius: 0,
-                                    topTrailingRadius: 10
+                                    topTrailingRadius: 9.5
                                 )
                             )
                             .popover(isPresented: $showPopover) {
