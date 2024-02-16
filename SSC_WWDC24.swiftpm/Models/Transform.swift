@@ -34,11 +34,11 @@ enum TransformType: String, CaseIterable, Codable {
     var iconName: String {
         switch self {
         case .move:
-            "arrow.up.right.circle"
+            "move.3d"
         case .orbit:
-            "globe"
+            "globe.europe.africa"
         case .spiral:
-            "arrow.clockwise.circle"
+            "tornado"
         case .random:
             "die.face.5"
         }
@@ -212,7 +212,9 @@ class TransformModel {
             
             let periodLength = length / frequency
             
-            if offset.truncatingRemainder(dividingBy: periodLength) <= 1.5 {
+            let remainder = offset.truncatingRemainder(dividingBy: periodLength)
+            
+            if remainder <= 1.5 && remainder >= 0.2 {
                 var result = SCNVector3(x: Float.random(in: -radius...radius), y: Float.random(in: 0...(radius / 2)), z: Float.random(in: -radius...radius))
                 
                 while simd_distance(simd_float3(result), simd_float3(SCNVector3(0, 4.5, 0))) < 8 {

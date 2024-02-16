@@ -29,7 +29,7 @@ struct TransformView: View {
             VStack {
                 Spacer()
                 
-                HStack(spacing: 5) {
+                HStack(spacing: 5) {                    
                     Image(systemName: transformModel.type.iconName)
                         .foregroundStyle(.white)
                         .bold()

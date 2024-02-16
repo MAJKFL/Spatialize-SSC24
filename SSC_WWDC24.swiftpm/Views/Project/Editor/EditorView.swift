@@ -26,7 +26,7 @@ struct EditorView: View {
         ZStack {
             ForEach(project.nodes) { node in
                 Text(node.name)
-                    .foregroundStyle(.background)
+                    .foregroundStyle(.black)
                     .onChange(of: node.color) { oldValue, newValue in
                         viewModel.onNodeColorChange(node)
                     }

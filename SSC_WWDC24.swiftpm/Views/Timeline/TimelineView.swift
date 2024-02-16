@@ -18,6 +18,9 @@ struct TimelineView: View {
     /// Transform the user is currently editing size.
     @Binding var selectedTransform: TransformModel?
     
+    @State private var timelineLabelsImage: UIImage?
+    @State private var timelineImage: UIImage?
+    
     /// Current number of beats displayed by the timeline.
     private var numberOfBeats: Int {
         let lastTrackEnd = project.nodes
@@ -64,19 +67,15 @@ struct TimelineView: View {
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack(alignment: .top) {
-                        LazyHStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
-                            ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
-                                VStack {
-                                    Rectangle()
-                                        .fill(.gray.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.3))
-                                        .frame(width: 1)
-                                }
-                                .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
+                        HStack {
+                            if let timelineImage {
+                                Image(uiImage: timelineImage)
+                                    .resizable()
+                                    .padding(.leading, 23)
                             }
                             
                             Spacer()
                         }
-                        .padding(.leading, 18)
                         
                         tracks()
                             .padding(.leading, 18)
@@ -104,6 +103,15 @@ struct TimelineView: View {
                 Constants.beatMarkerWidthFor(timeSignature: project.timeSignature)) {
                 playheadManager.pause()
             }
+        }
+        .onAppear {
+            generateTimeline()
+        }
+        .onChange(of: numberOfBeats) { oldValue, newValue in
+            generateTimeline()
+        }
+        .onChange(of: project.nodes.count) { oldValue, newValue in
+            generateTimeline()
         }
     }
     
@@ -143,23 +151,35 @@ struct TimelineView: View {
     private func beatLabels() -> some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                LazyHStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
-                    ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
-                        VStack {
-                            Text(getBeatStr(x))
-                                .font(.caption)
-                                .foregroundStyle(.secondary.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.5))
-                                .frame(width: 30, height: 20)
-                                .padding(5)
-                                .onTapGesture {
-                                    guard !playheadManager.isPlaying else { return }
-                                    playheadManager.jumpTo(x)
-                                }
+                ZStack {
+                    HStack {
+                        if let timelineLabelsImage {
+                            Image(uiImage: timelineLabelsImage)
+                                .resizable()
+                                .padding(.leading, -4)
                         }
-                        .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
+                        
+                        Spacer()
                     }
                     
-                    Spacer()
+                    if !playheadManager.isPlaying {
+                        HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
+                            ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
+                                VStack {
+                                    Color.clear
+                                        .frame(width: 30, height: 20)
+                                        .padding(5)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            guard !playheadManager.isPlaying else { return }
+                                            playheadManager.jumpTo(x)
+                                        }
+                                }
+                                .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
+                            }
+                        }
+                        .padding(.leading, -18)
+                    }
                 }
                 
                 Image(systemName: "chevron.down")
@@ -213,11 +233,6 @@ struct TimelineView: View {
         Constants.trackWidth(track, bpm: project.bpm) + track.start
     }
     
-    /// Returns the string representation of the beat number.
-    func getBeatStr(_ x: Int) -> String {
-        return String(x / project.timeSignature.firstDigit) + "." + String(x % project.timeSignature.firstDigit + 1)
-    }
-    
     /// Creates a new node.
     func addNewNode() {
         let number = project.nodes
@@ -237,5 +252,12 @@ struct TimelineView: View {
         
         project.nodes.append(Node(position: currentPosition + 1, name: "Speaker\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: colors[(currentPosition + 1) % colors.count]))
         project.nodes.sort(by: { $0.position < $1.position })
+    }
+    
+    func generateTimeline() {
+        Task {
+            timelineLabelsImage = await TimelineGenerator.generateTimelineLabels(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: 40)
+            timelineImage = await TimelineGenerator.generateTimeline(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: Double(project.nodes.count) * Constants.nodeViewHeight)
+        }
     }
 }

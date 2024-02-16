@@ -81,12 +81,12 @@ struct ProjectView: View {
                     .font(.title)
                     .bold()
                     .foregroundStyle(.white)
-                    .padding([.leading, .top])
+                    .padding([.leading, .vertical])
                 
                 ForEach(TransformType.allCases, id: \.self) { type in
                     TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)
                         .frame(height: Constants.nodeViewHeight / 2)
-                        .padding([.horizontal, .top])
+                        .padding([.horizontal, .bottom])
                 }
             }
         }
