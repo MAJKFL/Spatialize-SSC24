@@ -44,34 +44,36 @@ struct TransformTimelineView: View {
     }
     
     var body: some View {
-        TransformView(transformModel: transformModel, isObstructed: isObstructed, backgroundColor: node.color)
+        TransformView(transformModel: transformModel)
             .overlay {
-                VStack {
+                ZStack {
                     HStack {
                         Spacer()
                         
                         GeometryReader { geo in
-                            Button("Edit") {
-                                showPopover.toggle()
+                            VStack {
+                                Spacer()
+                                
+                                Button("Edit") {
+                                    showPopover.toggle()
+                                }
+                                .padding(5)
+                                .background(Material.thick)
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                                .popover(isPresented: $showPopover) {
+                                    TransformPreviewView(project: project, node: node, transformModel: transformModel)
+                                        .frame(width: 500, height: 700)
+                                }
+                                .offset(x: getEditOffsetX(from: geo) + 0.1)
+                                
+                                Spacer()
                             }
-                            .padding(5)
-                            .background(Material.thick)
-                            .clipShape(getEditRect(from: geo))
-                            .popover(isPresented: $showPopover) {
-                                TransformPreviewView(project: project, node: node, transformModel: transformModel)
-                                    .frame(width: 500, height: 700)
-                            }
-                            .offset(x: getEditOffsetX(from: geo) + 0.1, y: getEditOffsetY(from: geo))
                         }
-                        .frame(width: 39.8, height: 20)
+                        .frame(maxWidth: 40)
+                        .padding(.trailing, 10)
                     }
                     
-                    Spacer()
-                }
-            }
-            .overlay {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
+                    getRect()
                         .fill(.clear)
                         .strokeBorder(selectedTransform?.id == transformModel.id ? selectionBorderColor : .clear, lineWidth: 3)
                     
@@ -103,6 +105,21 @@ struct TransformTimelineView: View {
                         }
                     }
                 }
+            }
+            .background {
+                getRect()
+                    .fill(isObstructed ? Color.red.opacity(0.5) : node.color.opacity(0.5))
+                    .strokeBorder(node.color, lineWidth: 3)
+            }
+            .draggable(TransformTransfer(model: transformModel)) {
+                Image(systemName: transformModel.type.iconName)
+                    .foregroundStyle(Color.white)
+                    .font(.largeTitle)
+                    .padding()
+                    .background {
+                        Color.gray.opacity(0.8)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
             }
             .onChange(of: startPointChange) { oldValue, newValue in
                 let change = newValue - oldValue;
@@ -151,45 +168,22 @@ struct TransformTimelineView: View {
         }
     }
     
-    private func getEditOffsetY(from geo: GeometryProxy) -> Double {
-        let offset = UIScreen.main.bounds.size.width - geo.frame(in: .global).maxX - 10
+    private func getRect() -> UnevenRoundedRectangle {
+        let shouldLeftBeRounded = !node.tracks.contains(where: {
+            $0.start <= transformModel.start && 
+            $0.start + Constants.trackWidth($0, bpm: project.bpm) > transformModel.start
+        })
         
-        if offset < 0 && offset > -30 {
-            let t = -offset / 240.0
-            
-            return Constants.nodeViewHeight * t
-        } else if offset <= -30 {
-            return Constants.nodeViewHeight / 8
-        } else {
-            return 0
-        }
-    }
-    
-    private func getEditRect(from geo: GeometryProxy) -> UnevenRoundedRectangle {
-        var topLeading: Double = 0
-        let bottomLeading: Double = 5
-        var bottomTrailing: Double = 0
-        var topTrailing: Double = 9
-        
-        let offset = UIScreen.main.bounds.size.width - geo.frame(in: .global).maxX - 10
-        
-        if offset < 0 && offset > -30 {
-            let t = -offset / 30.0
-            
-            topLeading = 5 * t
-            bottomTrailing = topLeading
-            topTrailing = 9.5 - topLeading
-        } else if offset <= -30 {
-            topLeading = 5
-            bottomTrailing = 5
-            topTrailing = 5
-        }
+        let shouldRightBeRounded = !node.tracks.contains(where: {
+            $0.start <= transformModel.start + transformModel.length &&
+            $0.start + Constants.trackWidth($0, bpm: project.bpm) > transformModel.start + transformModel.length
+        })
         
         return .rect(
-            topLeadingRadius: topLeading,
-            bottomLeadingRadius: bottomLeading,
-            bottomTrailingRadius: bottomTrailing,
-            topTrailingRadius: topTrailing
+            topLeadingRadius: 10,
+            bottomLeadingRadius: shouldLeftBeRounded ? 10 : 0,
+            bottomTrailingRadius: shouldRightBeRounded ? 10 : 0,
+            topTrailingRadius: 10
         )
     }
 }

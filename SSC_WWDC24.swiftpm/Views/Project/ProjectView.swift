@@ -85,6 +85,21 @@ struct ProjectView: View {
                 
                 ForEach(TransformType.allCases, id: \.self) { type in
                     TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)
+                        .background {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.gray.opacity(0.5))
+                                .strokeBorder(Color.gray, lineWidth: 3)
+                        }
+                        .draggable(TransformTransfer(model: TransformModel.defaultModel(for: type))) {
+                            Image(systemName: TransformModel.defaultModel(for: type).type.iconName)
+                                .foregroundStyle(Color.white)
+                                .font(.largeTitle)
+                                .padding()
+                                .background {
+                                    Color.gray.opacity(0.8)
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                        }
                         .frame(height: Constants.nodeViewHeight / 2)
                         .padding([.horizontal, .bottom])
                 }

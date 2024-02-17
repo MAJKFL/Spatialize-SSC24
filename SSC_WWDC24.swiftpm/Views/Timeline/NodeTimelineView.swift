@@ -45,7 +45,7 @@ struct NodeTimelineView: View {
                 .opacity(0.1)
                 .frame(height: 1)
             
-            VStack(spacing: 0) {
+            VStack(spacing: -3) {
                 ZStack {
                     ForEach(node.transforms) { transformModel in
                         HStack {
@@ -57,7 +57,7 @@ struct NodeTimelineView: View {
                         }
                     }
                 }
-                .frame(height: Constants.nodeViewHeight / 2)
+                .frame(height: Constants.nodeViewHeight * 0.4)
                 
                 ZStack {
                     ForEach(node.tracks) { track in
@@ -79,7 +79,7 @@ struct NodeTimelineView: View {
                         }
                     }
                 }
-                .frame(height: Constants.nodeViewHeight / 2)
+                .frame(height: Constants.nodeViewHeight * 0.6)
             }
         }
     }

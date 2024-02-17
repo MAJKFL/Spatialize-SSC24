@@ -40,7 +40,7 @@ struct TrackTimelineView: View {
                     .opacity(0.8)
                     .background {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 10)
+                            getRect()
                                 .fill(isObstructed ? .secondary.opacity(0.3) : node.color.opacity(0.7))
                                 .strokeBorder(isObstructed ? .secondary.opacity(0.7) : node.color.opacity(0.9), lineWidth: 3)
                                 .opacity(isEnabled ? 1 : 0.3)
@@ -64,11 +64,11 @@ struct TrackTimelineView: View {
                         }
                     }
                     .mask {
-                        RoundedRectangle(cornerRadius: 10)
+                        getRect()
                             .fill(.black)
                     }
             } else {
-                Rectangle()
+                getRect()
                     .fill(.clear)
             }
         }
@@ -103,5 +103,24 @@ struct TrackTimelineView: View {
                 self.waveformImage = Image(uiImage: newImage)
             }
         }
+    }
+    
+    private func getRect() -> UnevenRoundedRectangle {
+        let shouldLeftBeRounded = !node.transforms.contains(where: {
+            $0.start <= track.start &&
+            $0.start + $0.length > track.start
+        })
+        
+        let shouldRightBeRounded = !node.transforms.contains(where: {
+            $0.start <= track.start + Constants.trackWidth(track, bpm: project.bpm) &&
+            $0.start + $0.length > track.start + Constants.trackWidth(track, bpm: project.bpm)
+        })
+        
+        return .rect(
+            topLeadingRadius: shouldLeftBeRounded ? 10 : 0,
+            bottomLeadingRadius: 10,
+            bottomTrailingRadius: 10,
+            topTrailingRadius: shouldRightBeRounded ? 10 : 0
+        )
     }
 }

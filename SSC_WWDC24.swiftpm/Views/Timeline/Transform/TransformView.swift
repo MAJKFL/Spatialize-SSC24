@@ -14,12 +14,8 @@ struct TransformView: View {
     
     @State private var showPreview = false
     
-    /// Indicates whether the transform is obstructed by a different transform.
-    var isObstructed = false
     /// Specifies whether the view should be a template.
     var isTemplate = false
-    
-    var backgroundColor = Color.gray
     
     /// Rows used for displaying the transform properties.
     private let rows = [GridItem(.flexible()), GridItem(.flexible())]
@@ -62,21 +58,6 @@ struct TransformView: View {
         .frame(width: transformModel.length)
         .mask {
             Rectangle()
-        }
-        .background {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(isObstructed ? Color.red.opacity(0.5) : backgroundColor.opacity(0.5))
-                .strokeBorder(backgroundColor, lineWidth: 3)
-        }
-        .draggable(TransformTransfer(model: transformModel)) {
-            Image(systemName: transformModel.type.iconName)
-                .foregroundStyle(Color.white)
-                .font(.largeTitle)
-                .padding()
-                .background {
-                    Color.gray.opacity(0.8)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 5))
         }
     }
     
