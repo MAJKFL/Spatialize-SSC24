@@ -41,9 +41,17 @@ struct NodeTimelineView: View {
                     return true
                 }
             
-            Color.secondary
-                .opacity(0.1)
-                .frame(height: 1)
+            VStack {
+                Spacer()
+                    .frame(height: Constants.nodeViewHeight * 0.4)
+                
+                Color.secondary
+                    .opacity(0.1)
+                    .frame(height: 1)
+                
+                Spacer()
+                    .frame(height: Constants.nodeViewHeight * 0.6)
+            }
             
             VStack(spacing: -3) {
                 ZStack {
@@ -58,6 +66,7 @@ struct NodeTimelineView: View {
                     }
                 }
                 .frame(height: Constants.nodeViewHeight * 0.4)
+                .zIndex(1)
                 
                 ZStack {
                     ForEach(node.tracks) { track in

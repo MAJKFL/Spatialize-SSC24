@@ -175,8 +175,8 @@ struct TransformTimelineView: View {
         })
         
         let shouldRightBeRounded = !node.tracks.contains(where: {
-            $0.start <= transformModel.start + transformModel.length &&
-            $0.start + Constants.trackWidth($0, bpm: project.bpm) > transformModel.start + transformModel.length
+            $0.start < transformModel.start + transformModel.length &&
+            ($0.start + Constants.trackWidth($0, bpm: project.bpm) > transformModel.start + transformModel.length || ($0.start + Constants.trackWidth($0, bpm: project.bpm)).isEqualTo(to: transformModel.start + transformModel.length, withPrecision: 0.1))
         })
         
         return .rect(

@@ -135,8 +135,10 @@ struct ProjectListView: View {
         n4.transforms.append(transform4)
         
         let n5 = Node(position: 5, name: "Organ2", color: UIColor(#colorLiteral(red: 1, green: 0.251, blue: 0.078, alpha: 1)))
-        let track5 = Track(id: copyBundleFile(named: "Organ2"), fileName: "Organ2", ext: "mp3", trackLength: 32.87671201814059, start: 0.0)
-        n5.tracks.append(track5)
+        let track51 = Track(id: copyBundleFile(named: "Organ2-3"), fileName: "Organ2-3", ext: "mp3", trackLength: 6.575351473922902, start: 1920.0)
+        let track52 = Track(id: copyBundleFile(named: "Organ2-1"), fileName: "Organ2-1", ext: "mp3", trackLength: 9.86299319727891, start: 0.0)
+        let track53 = Track(id: copyBundleFile(named: "Organ2-2"), fileName: "Organ2-2", ext: "mp3", trackLength: 3.287687074829932, start: 1440.0)
+        n5.tracks = [track51, track52, track53]
         let transform5 = TransformModel(start: 0.0, length: 240.0, type: .move, doubleFields: ["x": 40.0, "z": -50.0, "y": 10.0], booleanFields: ["interp": false])
         n5.transforms.append(transform5)
         

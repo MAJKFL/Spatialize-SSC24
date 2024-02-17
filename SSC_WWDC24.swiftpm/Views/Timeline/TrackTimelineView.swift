@@ -112,8 +112,8 @@ struct TrackTimelineView: View {
         })
         
         let shouldRightBeRounded = !node.transforms.contains(where: {
-            $0.start <= track.start + Constants.trackWidth(track, bpm: project.bpm) &&
-            $0.start + $0.length > track.start + Constants.trackWidth(track, bpm: project.bpm)
+            $0.start < track.start + Constants.trackWidth(track, bpm: project.bpm) &&
+            $0.start + $0.length >= track.start + Constants.trackWidth(track, bpm: project.bpm)
         })
         
         return .rect(
