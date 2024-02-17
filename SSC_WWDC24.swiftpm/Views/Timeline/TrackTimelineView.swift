@@ -105,6 +105,7 @@ struct TrackTimelineView: View {
         }
     }
     
+    /// Returns the shape of track view.
     private func getRect() -> UnevenRoundedRectangle {
         let shouldLeftBeRounded = !node.transforms.contains(where: {
             $0.start <= track.start &&

@@ -18,18 +18,29 @@ struct TimelineView: View {
     /// Transform the user is currently editing size.
     @Binding var selectedTransform: TransformModel?
     
+    /// Textual labels representing beat numbers.
     @State private var timelineLabelsImage: UIImage?
+    /// Vertical bars representing beats.
     @State private var timelineImage: UIImage?
+    /// States if the timeline is currently being generated.
+    @State private var isGeneratingTimeline = false
     
     /// Current number of beats displayed by the timeline.
     private var numberOfBeats: Int {
         let lastTrackEnd = project.nodes
             .flatMap { $0.tracks }
             .map { getEndFor(track: $0) }
-            .max()
+            .max() ?? 0
         
-        if let lastTrackEnd {
-            return Constants.getNumberOfBeatsFor(lastTrackEnd, with: project.timeSignature)
+        let lastTransformEnd = project.nodes
+            .flatMap { $0.transforms }
+            .map { $0.start + $0.length }
+            .max() ?? 0
+        
+        let max = max(lastTrackEnd, lastTransformEnd)
+        
+        if max > 0 {
+            return Constants.getNumberOfBeatsFor(max, with: project.timeSignature)
         } else {
             return Int(Constants.fullBeatWidth) / 10 * project.timeSignature.secondDigit
         }
@@ -110,6 +121,9 @@ struct TimelineView: View {
         .onChange(of: numberOfBeats) { oldValue, newValue in
             generateTimeline()
         }
+        .onChange(of: project.timeSignature) { oldValue, newValue in
+            generateTimeline()
+        }
         .onChange(of: project.nodes.count) { oldValue, newValue in
             generateTimeline()
         }
@@ -155,7 +169,6 @@ struct TimelineView: View {
                     HStack {
                         if let timelineLabelsImage {
                             Image(uiImage: timelineLabelsImage)
-                                .resizable()
                                 .padding(.leading, -4)
                         }
                         
@@ -254,10 +267,22 @@ struct TimelineView: View {
         project.nodes.sort(by: { $0.position < $1.position })
     }
     
+    /// Renders timeline components.
     func generateTimeline() {
-        Task {
-            timelineLabelsImage = await TimelineGenerator.generateTimelineLabels(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: 40)
-            timelineImage = await TimelineGenerator.generateTimeline(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: Double(project.nodes.count) * Constants.nodeViewHeight)
+        guard !isGeneratingTimeline else { return }
+        
+        isGeneratingTimeline = true
+        
+        Task.detached {
+            let timelineLabelsImage = await TimelineGenerator.generateTimelineLabels(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: 40)
+            let timelineImage = await TimelineGenerator.generateTimeline(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: Double(project.nodes.count) * Constants.nodeViewHeight)
+            
+            DispatchQueue.main.async {
+                self.timelineLabelsImage = timelineLabelsImage
+                self.timelineImage = timelineImage
+                
+                isGeneratingTimeline = false
+            }
         }
     }
 }
