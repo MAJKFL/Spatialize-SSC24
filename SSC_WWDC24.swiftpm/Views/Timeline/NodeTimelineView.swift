@@ -107,6 +107,8 @@ struct NodeTimelineView: View {
         transform.start = location.x - location.x.truncatingRemainder(dividingBy: Constants.fullBeatWidth / 4)
         node.transforms.append(transform)
         node.transforms.sort(by: { $0.start > $1.start })
+        
+        selectedTransform = transform
     }
     
     /// Used for importing audio files and rearranging them.

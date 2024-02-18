@@ -275,7 +275,7 @@ struct TimelineView: View {
         
         Task.detached {
             let timelineLabelsImage = await TimelineGenerator.generateTimelineLabels(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: 40)
-            let timelineImage = await TimelineGenerator.generateTimeline(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: Double(project.nodes.count) * Constants.nodeViewHeight)
+            let timelineImage = await TimelineGenerator.generateTimeline(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: Double(project.nodes.count + 1) * Constants.nodeViewHeight)
             
             DispatchQueue.main.async {
                 self.timelineLabelsImage = timelineLabelsImage

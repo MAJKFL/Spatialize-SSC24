@@ -12,6 +12,8 @@ class TimelineGenerator {
     
     /// Generates timeline for given parameters.
     static func generateTimeline(numberOfBeats: Int, timeSignature: TimeSignature, imageHeight: Double) async -> UIImage? {
+        guard imageHeight != 0 else { return nil }
+        
         let imageSize = CGSize(width: Double((numberOfBeats - timeSignature.firstDigit)) * (Constants.beatMarkerWidthFor(timeSignature: timeSignature) + Constants.beatSpacingFor(timeSingature: timeSignature)), height: imageHeight)
 
         UIGraphicsBeginImageContextWithOptions(imageSize, false, 0)
