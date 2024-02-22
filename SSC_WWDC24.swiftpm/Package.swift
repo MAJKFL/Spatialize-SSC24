@@ -8,13 +8,13 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "AudioFiller",
+    name: "Spatialize",
     platforms: [
         .iOS("17.0")
     ],
     products: [
         .iOSApplication(
-            name: "AudioFiller",
+            name: "Spatialize",
             targets: ["AppModule"],
             bundleIdentifier: "com.jakubflorek.SSC-WWDC24",
             teamIdentifier: "T23P54M8LP",

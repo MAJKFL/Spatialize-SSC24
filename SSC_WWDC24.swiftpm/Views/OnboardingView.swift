@@ -15,8 +15,9 @@ struct OnboardingView: View {
     var body: some View {
         NavigationView {
             VStack {
-                Text("Welcome to\n**AudioFiller**")
+                Text("Welcome to\n**Spatialize**")
                     .font(.largeTitle)
+                    .multilineTextAlignment(.center)
                 
                 Text("Fill Your World with Dynamic Soundscapes!")
                     .font(.subheadline)
@@ -79,7 +80,7 @@ struct OnboardingView: View {
                 
                 Spacer()
                 
-                NavigationLink(destination: speakerNodeTutorial) {
+                NavigationLink(destination: tutorial) {
                     Text("Continue")
                         .font(.headline)
                         .foregroundStyle(.white)
@@ -94,8 +95,8 @@ struct OnboardingView: View {
         }
     }
     
-    /// Explains how to use speaker nodes.
-    private func speakerNodeTutorial() -> some View {
+    /// Explains basic controls.
+    private func tutorial() -> some View {
         VStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 30) {

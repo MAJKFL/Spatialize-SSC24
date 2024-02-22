@@ -10,6 +10,9 @@ import Combine
 
 /// Displays all speaker nodes with their associated tracks and transforms.
 struct TimelineView: View {
+    /// Current color scheme of the app.
+    @Environment(\.colorScheme) var colorScheme
+    
     /// Current project.
     @Bindable var project: Project
     /// Used for adjusting playhead and managing playback.
@@ -125,6 +128,9 @@ struct TimelineView: View {
             generateTimeline()
         }
         .onChange(of: project.nodes.count) { oldValue, newValue in
+            generateTimeline()
+        }
+        .onChange(of: colorScheme) { oldValue, newValue in
             generateTimeline()
         }
     }

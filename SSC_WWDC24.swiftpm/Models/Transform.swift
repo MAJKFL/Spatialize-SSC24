@@ -61,7 +61,7 @@ enum TransformType: String, CaseIterable, Codable {
             """
         case .random:
             """
-            This transform moves the node to random points withing the specified cube radius.
+            This transform moves the node to random points within the specified cube radius.
             """
         }
     }
