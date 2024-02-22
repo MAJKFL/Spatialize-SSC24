@@ -9,76 +9,91 @@ import SwiftUI
 import AVFoundation
 import SceneKit
 
+/// Represents audio files and transforms associated with a node on the timeline.
 struct NodeTimelineView: View {
+    /// Swift Data context.
     @Environment(\.modelContext) var context
+    
+    /// Current project.
     @Bindable var project: Project
+    /// Node represented by this timeline.
     @Bindable var node: Node
     
+    /// Transform the user is currently editing size.
     @Binding var selectedTransform: TransformModel?
-    
-    let editTransform: Bool
     
     var body: some View {
         ZStack {
-            if !editTransform {
-                Color.secondary
-                    .opacity(0.05)
-                    .frame(height: Constants.nodeViewHeight)
-                    .dropDestination(for: AudioFile.self) { items, location in
-                        guard let item = items.first else { return false }
-                        
-                        handleFileDrop(item.file, at: location)
-                        
-                        return true
+            Color.secondary
+                .opacity(0.05)
+                .dropDestination(for: TimelineDropItem.self) { items, location in
+                    guard let item = items.first else { return false }
+                    
+                    switch item {
+                    case .audio(let audio):
+                        handleFileDrop(audio.file, at: location)
+                    case .transform(let transform):
+                        handleTransformDrop(transform, at: location)
+                    default:
+                        return false
                     }
+                    
+                    return true
+                }
+            
+            VStack {
+                Spacer()
+                    .frame(height: Constants.nodeViewHeight * 0.4)
+                
+                Color.secondary
+                    .opacity(0.1)
+                    .frame(height: 1)
+                
+                Spacer()
+                    .frame(height: Constants.nodeViewHeight * 0.6)
             }
             
-            ForEach(node.tracks) { track in
-                HStack {
-                    TrackTimelineView(project: project, node: node, track: track)
-                        .offset(x: track.start)
-                        .draggable(AudioFile(file: track.fileURL)) {
-                            Image(systemName: "waveform")
-                                .foregroundStyle(Color.white)
-                                .font(.largeTitle)
-                                .padding()
-                                .background {
-                                    node.color.opacity(0.8)
-                                }
-                                .clipShape(RoundedRectangle(cornerRadius: 5))
+            VStack(spacing: -3) {
+                ZStack {
+                    ForEach(node.transforms) { transformModel in
+                        HStack {
+                            TransformTimelineView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform)
+                                .offset(x: transformModel.start)
+                            
+                            
+                            Spacer()
                         }
-                        .disabled(editTransform)
-                    
-                    Spacer()
-                }
-            }
-            
-            if editTransform {
-                Color.secondary
-                    .opacity(0.05)
-                    .frame(height: Constants.nodeViewHeight)
-                    .dropDestination(for: TransformTransfer.self) { items, location in
-                        guard let item = items.first else { return false }
-                        
-                        handleTransformDrop(item, at: location)
-                        
-                        return true
                     }
-            }
-            
-            ForEach(node.transforms) { transformModel in
-                HStack {
-                    TransformTimelineView(project: project, node: node, transformModel: transformModel, selectedTransform: $selectedTransform)
-                        .offset(x: transformModel.start)
-                        .disabled(!editTransform)
-                    
-                    
-                    Spacer()
                 }
+                .frame(height: Constants.nodeViewHeight * 0.4)
+                .zIndex(1)
+                
+                ZStack {
+                    ForEach(node.tracks) { track in
+                        HStack {
+                            TrackTimelineView(project: project, node: node, track: track)
+                                .offset(x: track.start)
+                                .draggable(AudioFile(file: track.fileURL)) {
+                                    Image(systemName: "waveform")
+                                        .foregroundStyle(Color.white)
+                                        .font(.largeTitle)
+                                        .padding()
+                                        .background {
+                                            node.color.opacity(0.8)
+                                        }
+                                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                                }
+                            
+                            Spacer()
+                        }
+                    }
+                }
+                .frame(height: Constants.nodeViewHeight * 0.6)
             }
         }
     }
     
+    /// Used for changing position and creating transforms.
     private func handleTransformDrop(_ transfer: TransformTransfer, at location: CGPoint) {
         let transform = TransformModel(transfer: transfer)
         
@@ -92,8 +107,11 @@ struct NodeTimelineView: View {
         transform.start = location.x - location.x.truncatingRemainder(dividingBy: Constants.fullBeatWidth / 4)
         node.transforms.append(transform)
         node.transforms.sort(by: { $0.start > $1.start })
+        
+        selectedTransform = transform
     }
     
+    /// Used for importing audio files and rearranging them.
     private func handleFileDrop(_ url: URL, at location: CGPoint) {
         if let otherNode = project.nodes.first(where: { $0.tracks.contains(where: { $0.fileURL == url }) }),
            let otherTrack = otherNode.tracks.first(where: { $0.fileURL == url }) {
@@ -118,5 +136,16 @@ struct NodeTimelineView: View {
             
             node.tracks.append(track)
         }
+    }
+}
+
+enum TimelineDropItem: Transferable {
+    case none
+    case transform(TransformTransfer)
+    case audio(AudioFile)
+    
+    static var transferRepresentation: some TransferRepresentation {
+        ProxyRepresentation { TimelineDropItem.audio($0) }
+        ProxyRepresentation { TimelineDropItem.transform($0) }
     }
 }

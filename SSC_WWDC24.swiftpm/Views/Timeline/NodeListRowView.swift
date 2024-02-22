@@ -7,15 +7,25 @@
 
 import SwiftUI
 
+/// Speaker node representation in the list on the timeline left side.
 struct NodeListRowView: View {
+    /// Swift Data context.
     @Environment(\.modelContext) var context
+    /// Current project.
     @Bindable var project: Project
+    /// Node represented by this row.
     @Bindable var node: Node
     
+    /// Specifies whether to show the detail popover.
     @State private var showDetailPopover = false
     
+    /// Specifies whether other speaker nodes are solo and this one isn't.
+    private var areOtherSolo: Bool {
+        project.nodes.contains(where: { $0.isSolo }) && !node.isSolo
+    }
+    
     var body: some View {
-        HStack {
+        HStack(spacing: 10) {
             Button {
                 node.isPlaying.toggle()
             } label: {
@@ -23,6 +33,18 @@ struct NodeListRowView: View {
                     .font(.headline)
                     .frame(width: 18)
             }
+            
+            Button {
+                node.isSolo.toggle()
+            } label: {
+                Image(systemName: "headphones")
+                    .font(.headline)
+                    .frame(width: 18, height: 18)
+            }
+            .tint(node.isSolo ? .white : node.color.opacity(areOtherSolo ? 0.3 : 1))
+            .padding(5)
+            .background(node.isSolo ? .orange : .clear)
+            .clipShape(RoundedRectangle(cornerRadius: 5))
             
             Text(node.name)
                 .lineLimit(1)
@@ -39,12 +61,13 @@ struct NodeListRowView: View {
                 detailsPopover()
             }
         }
-        .tint(node.color)
+        .tint(node.color.opacity(areOtherSolo ? 0.3 : 1))
         .frame(height: Constants.nodeViewHeight)
         .padding(.horizontal)
     }
     
-    func detailsPopover() -> some View {
+    /// Speaker node popover with details.
+    private func detailsPopover() -> some View {
         Form {
             Section {
                 TextField("Name", text: $node.name)

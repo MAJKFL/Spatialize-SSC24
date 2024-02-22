@@ -7,13 +7,16 @@
 
 import Foundation
 
+/// Specifies the time signature of a project.
 enum TimeSignature: String, Codable, CaseIterable, Identifiable {
+    /// Unique identifier.
     var id: String {
         self.rawValue
     }
     
-    case ts34, ts44, ts54, ts68, ts78
+    case ts34, ts44, ts54
     
+    /// First digit of the time signature.
     var firstDigit: Int {
         switch self {
         case .ts34:
@@ -22,28 +25,15 @@ enum TimeSignature: String, Codable, CaseIterable, Identifiable {
             4
         case .ts54:
             5
-        case .ts68:
-            6
-        case .ts78:
-            7
         }
     }
     
+    /// Second digit of the time signature.
     var secondDigit: Int {
-        switch self {
-        case .ts34:
-            4
-        case .ts44:
-            4
-        case .ts54:
-            4
-        case .ts68:
-            8
-        case .ts78:
-            8
-        }
+        4
     }
     
+    /// String representation for displaying.
     var stringRepresentation: String {
         switch self {
         case .ts34:
@@ -52,10 +42,6 @@ enum TimeSignature: String, Codable, CaseIterable, Identifiable {
             "4/4"
         case .ts54:
             "5/4"
-        case .ts68:
-            "6/8"
-        case .ts78:
-            "7/8"
         }
     }
 }

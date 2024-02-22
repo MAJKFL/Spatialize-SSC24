@@ -8,27 +8,49 @@
 import SwiftUI
 import Combine
 
+/// Displays all speaker nodes with their associated tracks and transforms.
 struct TimelineView: View {
+    /// Current color scheme of the app.
+    @Environment(\.colorScheme) var colorScheme
+    
+    /// Current project.
     @Bindable var project: Project
+    /// Used for adjusting playhead and managing playback.
     @State var playheadManager: PlayheadManager
     
+    /// Transform the user is currently editing size.
     @Binding var selectedTransform: TransformModel?
-    let editTransform: Bool
     
-    var numberOfBeats: Int {
+    /// Textual labels representing beat numbers.
+    @State private var timelineLabelsImage: UIImage?
+    /// Vertical bars representing beats.
+    @State private var timelineImage: UIImage?
+    /// States if the timeline is currently being generated.
+    @State private var isGeneratingTimeline = false
+    
+    /// Current number of beats displayed by the timeline.
+    private var numberOfBeats: Int {
         let lastTrackEnd = project.nodes
             .flatMap { $0.tracks }
             .map { getEndFor(track: $0) }
-            .max()
+            .max() ?? 0
         
-        if let lastTrackEnd {
-            return Constants.getNumberOfBeatsFor(lastTrackEnd, with: project.timeSignature)
+        let lastTransformEnd = project.nodes
+            .flatMap { $0.transforms }
+            .map { $0.start + $0.length }
+            .max() ?? 0
+        
+        let max = max(lastTrackEnd, lastTransformEnd)
+        
+        if max > 0 {
+            return Constants.getNumberOfBeatsFor(max, with: project.timeSignature)
         } else {
             return Int(Constants.fullBeatWidth) / 10 * project.timeSignature.secondDigit
         }
     }
     
-    let colors = [
+    /// Colors used for new nodes.
+    private let colors = [
         UIColor(#colorLiteral(red: 0, green: 0.631, blue: 0.847, alpha: 1)),
         UIColor(#colorLiteral(red: 0.004, green: 0.38, blue: 0.996, alpha: 1)),
         UIColor(#colorLiteral(red: 0.298, green: 0.133, blue: 0.698, alpha: 1)),
@@ -45,20 +67,39 @@ struct TimelineView: View {
     
     var body: some View {
         ScrollView {
-            ZStack(alignment: .leading) {
+            ZStack(alignment: .topLeading) {
+                Rectangle()
+                    .fill(.ultraThickMaterial)
+                    .frame(width: 250, height: 40)
+                    .overlay {
+                        VStack {
+                            Spacer()
+                            
+                            Divider()
+                        }
+                    }
+                
                 ScrollView(.horizontal, showsIndicators: false) {
                     ZStack(alignment: .top) {
-                        beatMarkers()
-                            .padding(.leading, 250)
+                        HStack {
+                            if let timelineImage {
+                                Image(uiImage: timelineImage)
+                                    .resizable()
+                                    .padding(.leading, 23)
+                            }
+                            
+                            Spacer()
+                        }
                         
                         tracks()
-                            .padding(.leading, 250)
+                            .padding(.leading, 18)
                         
                         playhead()
-                            .padding(.leading, 250)
+                            .padding(.leading, 18)
                         
                         beatLabels()
                     }
+                    .padding(.leading, 250)
                 }
                 
                 nodeList()
@@ -66,7 +107,7 @@ struct TimelineView: View {
                     .background(.thickMaterial)
                     .padding(.top, 40)
             }
-            .frame(minHeight: 320)
+            .frame(minHeight: 420)
         }
         .ignoresSafeArea()
         .onChange(of: playheadManager.offset) { oldValue, newValue in
@@ -77,16 +118,31 @@ struct TimelineView: View {
                 playheadManager.pause()
             }
         }
+        .onAppear {
+            generateTimeline()
+        }
+        .onChange(of: numberOfBeats) { oldValue, newValue in
+            generateTimeline()
+        }
+        .onChange(of: project.timeSignature) { oldValue, newValue in
+            generateTimeline()
+        }
+        .onChange(of: project.nodes.count) { oldValue, newValue in
+            generateTimeline()
+        }
+        .onChange(of: colorScheme) { oldValue, newValue in
+            generateTimeline()
+        }
     }
     
-    func nodeList() -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+    /// Left hand list of speaker nodes.
+    private func nodeList() -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
                 VStack {
                     NodeListRowView(project: project, node: node)
                     
                     Divider()
-                        .padding(.bottom, 2.5)
                 }
                 .frame(height: Constants.nodeViewHeight)
             }
@@ -95,7 +151,7 @@ struct TimelineView: View {
                 addNewNode()
             } label: {
                 HStack {
-                    Text("Add new node")
+                    Text("Add new speaker")
                     
                     Spacer()
                     
@@ -111,26 +167,38 @@ struct TimelineView: View {
         .animation(.easeIn(duration: 0.2), value: project.nodes)
     }
     
-    func beatLabels() -> some View {
+    /// Sticky beat labels on top of the timeline.
+    private func beatLabels() -> some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
-                    ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
-                        VStack {
-                            Text(getBeatStr(x))
-                                .font(.caption)
-                                .foregroundStyle(.secondary.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.5))
-                                .frame(width: 30, height: 20)
-                                .padding(5)
-                                .onTapGesture {
-                                    guard !playheadManager.isPlaying else { return }
-                                    playheadManager.jumpTo(x)
-                                }
+                ZStack {
+                    HStack {
+                        if let timelineLabelsImage {
+                            Image(uiImage: timelineLabelsImage)
+                                .padding(.leading, -4)
                         }
-                        .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
+                        
+                        Spacer()
                     }
                     
-                    Spacer()
+                    if !playheadManager.isPlaying {
+                        HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
+                            ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
+                                VStack {
+                                    Color.clear
+                                        .frame(width: 30, height: 20)
+                                        .padding(5)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            guard !playheadManager.isPlaying else { return }
+                                            playheadManager.jumpTo(x)
+                                        }
+                                }
+                                .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
+                            }
+                        }
+                        .padding(.leading, -18)
+                    }
                 }
                 
                 Image(systemName: "chevron.down")
@@ -142,34 +210,18 @@ struct TimelineView: View {
                     .offset(x: playheadManager.offset)
             }
             .frame(height: 40)
-            .padding(.leading, Constants.timelineLeadingPaddingFor(timeSignature: project.timeSignature))
-            .padding(.leading, 250)
+            .padding(.leading, 18)
             .background(.thickMaterial)
             .offset(y: geo.frame(in: .scrollView(axis: .vertical)).minY < 0 ? -geo.frame(in: .scrollView(axis: .vertical)).minY : 0)
         }
     }
     
-    func beatMarkers() -> some View {
-        HStack(spacing: Constants.beatSpacingFor(timeSingature: project.timeSignature)) {
-            ForEach(project.timeSignature.firstDigit..<numberOfBeats, id: \.self) { x in
-                VStack {
-                    Rectangle()
-                        .fill(.gray.opacity(x % project.timeSignature.firstDigit == 0 ? 1 : 0.3))
-                        .frame(width: 1)
-                }
-                .frame(width: Constants.beatMarkerWidthFor(timeSignature: project.timeSignature))
-            }
-            
-            Spacer()
-        }
-        .padding(.leading, Constants.timelineLeadingPaddingFor(timeSignature: project.timeSignature))
-    }
-    
-    func tracks() -> some View {
+    /// Audio files associated with speaker nodes.
+    private func tracks() -> some View {
         HStack {
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 10) {
                 ForEach(project.nodes.sorted(by: { $0.position < $1.position })) { node in
-                    NodeTimelineView(project: project, node: node, selectedTransform: $selectedTransform, editTransform: editTransform)
+                    NodeTimelineView(project: project, node: node, selectedTransform: $selectedTransform)
                         .frame(height: Constants.nodeViewHeight)
                 }
                 
@@ -182,7 +234,8 @@ struct TimelineView: View {
         .padding(.leading, 4)
     }
     
-    func playhead() -> some View {
+    /// The main playhead of the editor.
+    private func playhead() -> some View {
         HStack {
             Rectangle()
             .fill(.primary)
@@ -194,31 +247,48 @@ struct TimelineView: View {
         .padding(.leading, 4)
     }
     
+    /// Returns the on devide coordinate of the track end.
     func getEndFor(track: Track) -> Double {
         Constants.trackWidth(track, bpm: project.bpm) + track.start
     }
     
-    func getBeatStr(_ x: Int) -> String {
-        return String(x / project.timeSignature.firstDigit) + "." + String(x % project.timeSignature.firstDigit + 1)
-    }
-    
+    /// Creates a new node.
     func addNewNode() {
         let number = project.nodes
             .map { $0.name }
-            .filter { $0.contains("New Node") }
-            .map { Int($0.replacingOccurrences(of: "New Node ", with: "")) ?? 0 }
+            .filter { $0.contains("Speaker") }
+            .map { Int($0.replacingOccurrences(of: "Speaker ", with: "")) ?? 0 }
             .max() ?? 0
         
         let defaultNodeNameCount = project.nodes
             .map { $0.name }
-            .filter { $0.contains("New Node") }
+            .filter { $0.contains("Speaker") }
             .count
         
         let currentPosition = project.nodes
             .map { $0.position }
             .max() ?? -1
         
-        project.nodes.append(Node(position: currentPosition + 1, name: "New Node\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: colors[(currentPosition + 1) % colors.count]))
+        project.nodes.append(Node(position: currentPosition + 1, name: "Speaker\(defaultNodeNameCount == 0 ? "" : " \(number + 1)")", color: colors[(currentPosition + 1) % colors.count]))
         project.nodes.sort(by: { $0.position < $1.position })
+    }
+    
+    /// Renders timeline components.
+    func generateTimeline() {
+        guard !isGeneratingTimeline else { return }
+        
+        isGeneratingTimeline = true
+        
+        Task.detached {
+            let timelineLabelsImage = await TimelineGenerator.generateTimelineLabels(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: 40)
+            let timelineImage = await TimelineGenerator.generateTimeline(numberOfBeats: numberOfBeats, timeSignature: project.timeSignature, imageHeight: Double(project.nodes.count + 1) * Constants.nodeViewHeight)
+            
+            DispatchQueue.main.async {
+                self.timelineLabelsImage = timelineLabelsImage
+                self.timelineImage = timelineImage
+                
+                isGeneratingTimeline = false
+            }
+        }
     }
 }

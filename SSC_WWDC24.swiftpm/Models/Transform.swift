@@ -12,19 +12,11 @@ import UniformTypeIdentifiers
 import SceneKit
 import SwiftUI
 
-protocol Transform {
-    var id: UUID { get set }
-    var start: Double { get set }
-    var length: Double { get set }
-    
-    var type: TransformType { get set }
-    var doubleFields: [ String: Double ] { get set }
-    var booleanFields: [ String: Bool ] { get set }
-}
-
+/// Type of the transform.
 enum TransformType: String, CaseIterable, Codable {
     case move, orbit, spiral, random
     
+    /// Name displayed in the interface of the transform type.
     var displayName: String {
         switch self {
         case .move:
@@ -38,32 +30,51 @@ enum TransformType: String, CaseIterable, Codable {
         }
     }
     
+    /// Name of the icon associated with the transform type.
     var iconName: String {
         switch self {
         case .move:
-            "arrow.up.right.circle"
+            "move.3d"
         case .orbit:
-            "globe"
+            "globe.europe.africa"
         case .spiral:
-            "arrow.clockwise.circle"
+            "tornado"
         case .random:
             "die.face.5"
         }
     }
     
-    var displayDescription: LocalizedStringKey {
+    /// Description associated with the transform type.
+    var displayDescription: String {
         switch self {
         case .move:
             """
             This transform moves the node to the specified coordinates.
-            Parameters:
+            """
+        case .orbit:
+            """
+            This transform moves the node circularly around the origin.
+            """
+        case .spiral:
+            """
+            This transform moves the node circularly around the origin, towards the end point, with smaller radius over time.
+            """
+        case .random:
+            """
+            This transform moves the node to random points within the specified cube radius.
+            """
+        }
+    }
+    
+    var parameterDescription: LocalizedStringKey {
+        switch self {
+        case .move:
+            """
             - **x**, **y**, **z** - Destination point components
             - **Interpolate** - Indicate whether to linearly interpolate between source and destination
             """
         case .orbit:
             """
-            This transform moves the node circularly around the origin.
-            Parameters:
             - **h** - Base height of the node
             - **r** - Radius of the orbit
             - **rev** - Number of revolutions
@@ -71,8 +82,6 @@ enum TransformType: String, CaseIterable, Codable {
             """
         case .spiral:
             """
-            This transform moves the node circularly around the origin, towards the end point, with smaller radius over time.
-            Parameters:
             - **hStart** - Starting height of the node
             - **hEnd** - Finish height of the node
             - **rev** - Number of revolutions
@@ -80,8 +89,6 @@ enum TransformType: String, CaseIterable, Codable {
             """
         case .random:
             """
-            This transform moves the node to random points withing the specified cube radius.
-            Parameters:
             - **r** - Radius of the cube
             - **freq** - How many times should transform randomly change the node's position
             """
@@ -89,16 +96,23 @@ enum TransformType: String, CaseIterable, Codable {
     }
 }
 
+/// Swift Data representation of a transform.
 @Model
-class TransformModel: Transform {
+class TransformModel {
+    /// Unique identifier.
     var id: UUID
+    /// Start displacment of the transfer on the display.
     var start: Double
+    /// On screen length of the transform.
     var length: Double
-    
+    /// Type of the transform.
     var type: TransformType
+    /// Numeric properties of the transform.
     var doubleFields: [ String: Double ]
+    /// Boolean properties of the transform.
     var booleanFields: [ String: Bool ]
     
+    /// Creates a new Swift Data representation of the transform with given properties.
     init(id: UUID = UUID(), start: Double, length: Double, type: TransformType, doubleFields: [String: Double], booleanFields: [String: Bool]) {
         self.id = id
         self.start = start
@@ -108,6 +122,7 @@ class TransformModel: Transform {
         self.booleanFields = booleanFields
     }
     
+    /// Creates a new Swift Data representation of the transform from the given transfer representation.
     init(transfer: TransformTransfer) {
         self.id = transfer.id
         self.start = transfer.start
@@ -117,6 +132,7 @@ class TransformModel: Transform {
         self.booleanFields = transfer.booleanFields
     }
     
+    /// Final position of the node after the transform.
     var endPosition: SCNVector3 {
         switch type {
         case .move:
@@ -130,13 +146,14 @@ class TransformModel: Transform {
         }
     }
     
+    /// Default transforms for given type.
     static func defaultModel(for type: TransformType) -> TransformModel {
         var doubleFields: [ String: Double ] = [:]
         var booleanFields: [ String: Bool ] = [:]
         
         switch type {
         case .move:
-            doubleFields = ["x": 0, "y": 20, "z": 0]
+            doubleFields = ["x": 20, "y": 20, "z": 20]
             booleanFields = ["interp": true]
         case .orbit:
             doubleFields = ["height": 30, "radius": 25, "rev": 1, "hMod": 0]
@@ -149,6 +166,7 @@ class TransformModel: Transform {
         return TransformModel(start: 0, length: Constants.fullBeatWidth * 4, type: type, doubleFields: doubleFields, booleanFields: booleanFields)
     }
     
+    /// Returns position at specific offset adjusted by this transform.
     func getPositionFor(playheadOffset offset: Double, currentPosition: SCNVector3, source: SCNVector3, mockT: Float? = nil) -> SCNVector3 {
         var t: Float
         
@@ -194,7 +212,9 @@ class TransformModel: Transform {
             
             let periodLength = length / frequency
             
-            if offset.truncatingRemainder(dividingBy: periodLength) <= 1.5 {
+            let remainder = offset.truncatingRemainder(dividingBy: periodLength)
+            
+            if remainder <= 1.5 && remainder >= 0.2 {
                 var result = SCNVector3(x: Float.random(in: -radius...radius), y: Float.random(in: 0...(radius / 2)), z: Float.random(in: -radius...radius))
                 
                 while simd_distance(simd_float3(result), simd_float3(SCNVector3(0, 4.5, 0))) < 8 {
@@ -209,14 +229,22 @@ class TransformModel: Transform {
     }
 }
 
-struct TransformTransfer: Transform, Codable, Transferable {
+/// Transferable representation of a transform.
+struct TransformTransfer: Codable, Transferable {
+    /// Unique identifier.
     var id: UUID
+    /// Start displacment of the transfer on the display.
     var start: Double
+    /// On screen length of the transform.
     var length: Double
+    /// Type of the transform.
     var type: TransformType
+    /// Numeric properties of the transform.
     var doubleFields: [ String: Double ]
+    /// Boolean properties of the transform.
     var booleanFields: [ String: Bool ]
     
+    /// Creates a new transfer from a model.
     init(model: TransformModel) {
         id = model.id
         start = model.start
@@ -226,6 +254,7 @@ struct TransformTransfer: Transform, Codable, Transferable {
         booleanFields = model.booleanFields
     }
     
+    /// Transfer representation.
     static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .content)
     }

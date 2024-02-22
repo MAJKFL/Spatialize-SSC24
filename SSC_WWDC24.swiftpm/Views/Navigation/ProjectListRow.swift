@@ -7,10 +7,14 @@
 
 import SwiftUI
 
+/// Used for navigating to a project.
 struct ProjectListRow: View {
+    /// Current project.
     @Bindable var project: Project
     
+    /// Specifies whether text field is editable.
     @State private var isTextFieldEnabled = false
+    /// Focuses the textfield.
     @FocusState private var isRenaming: Bool
     
     var body: some View {

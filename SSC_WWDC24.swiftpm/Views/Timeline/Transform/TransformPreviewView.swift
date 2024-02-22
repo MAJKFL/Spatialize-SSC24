@@ -1,5 +1,5 @@
 //
-//  TransformEditView.swift
+//  TransformPreviewView.swift
 //
 //
 //  Created by Jakub Florek on 03/02/2024.
@@ -8,12 +8,19 @@
 import SwiftUI
 import SceneKit
 
-struct TransformEditView: View {
-    let project: Project
-    let node: Node
+/// Popover used for editing a transform.
+struct TransformPreviewView: View {
+    /// Current project.
+    let project: Project?
+    /// Node associated with this transform.
+    let node: Node?
+    /// Transform edited by this view.
     @Bindable var transformModel: TransformModel
     
-    let transformPreviewNode: SCNNode = {
+    var isEditable = true
+    
+    /// Node used in the 3D preview.
+    private let transformPreviewNode: SCNNode = {
         let node = SCNNode()
         
         let sphereGeometry = SCNSphere(radius: 3)
@@ -32,7 +39,8 @@ struct TransformEditView: View {
         return node
     }()
     
-    let transformPathPreviewNodes: [SCNNode] = {
+    /// Nodes that create the path that describes the transform movement.
+    private let transformPathPreviewNodes: [SCNNode] = {
         var nodes = [SCNNode]()
         
         for i in 0..<100 {
@@ -44,7 +52,8 @@ struct TransformEditView: View {
         return nodes
     }()
     
-    let radiusBox: SCNNode = {
+    /// Box that represents the radius of the random transform.
+    private let radiusBox: SCNNode = {
         let node = SCNNode()
         
         let geometry = SCNBox()
@@ -60,12 +69,15 @@ struct TransformEditView: View {
         return node
     }()
     
+    /// Offset of the mock playhead.
     @State private var mockPlayheadOffset: Double = 0
     
-    let timer = Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()
+    /// Timer used for offsetting the mock playhead.
+    private let timer = Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()
     
-    var startPosition: SCNVector3 {
-        let previousTransform = node.transforms
+    /// Start position of the mock speaker node.
+    private var startPosition: SCNVector3 {
+        let previousTransform = node?.transforms
             .filter { trans in
                 trans.start + trans.length < transformModel.start
             }
@@ -98,24 +110,27 @@ struct TransformEditView: View {
                                 .frame(height: 3)
                         }
                         .onReceive(timer) { publisher in
-                            mockPlayheadOffset = (mockPlayheadOffset + (Double(project.bpm) / 60)).truncatingRemainder(dividingBy: transformModel.length)
+                            mockPlayheadOffset = (mockPlayheadOffset + (Double(project?.bpm ?? 80) / 60)).truncatingRemainder(dividingBy: transformModel.length)
                             
                             transformPreviewNode.position = transformModel.getPositionFor(playheadOffset: mockPlayheadOffset, currentPosition: transformPreviewNode.position, source: startPosition, mockT: Float(mockPlayheadOffset / transformModel.length))
                         }
                     }
                     
                     Text(transformModel.type.displayDescription)
+                        .font(.body)
                 }
                 
-                switch transformModel.type {
-                case .move:
-                    MoveTransformParameterEditView(transformModel: transformModel)
-                case .orbit:
-                    OrbitTransformParameterEditView(transformModel: transformModel)
-                case .spiral:
-                    SpiralTransformParameterEditView(transformModel: transformModel)
-                case .random:
-                    RandomTransformParameterEditView(transformModel: transformModel)
+                if isEditable {
+                    switch transformModel.type {
+                    case .move:
+                        MoveTransformParameterEditView(transformModel: transformModel)
+                    case .orbit:
+                        OrbitTransformParameterEditView(transformModel: transformModel)
+                    case .spiral:
+                        SpiralTransformParameterEditView(transformModel: transformModel)
+                    case .random:
+                        RandomTransformParameterEditView(transformModel: transformModel)
+                    }
                 }
             }
             .navigationTitle(transformModel.type.displayName)
@@ -128,15 +143,16 @@ struct TransformEditView: View {
         }
         .onAppear {
             let material = SCNMaterial()
-            material.diffuse.contents = node.uiColor
+            material.diffuse.contents = node?.uiColor ?? UIColor(#colorLiteral(red: 1, green: 0.984, blue: 0.259, alpha: 1))
             
             transformPreviewNode.geometry?.materials = [material]
             updatePathPreview()
         }
-        .tint(node.color)
+        .tint(node?.color ?? Color.blue)
     }
     
-    func updatePathPreview() {
+    /// Updates preview path.
+    private func updatePathPreview() {
         if transformModel.type != .random {
             for i in 0..<100 {
                 let node = transformPathPreviewNodes[i]
@@ -144,7 +160,7 @@ struct TransformEditView: View {
                 let geometry = lineBetween(vector: transformModel.getPositionFor(playheadOffset: 0, currentPosition: SCNVector3(x: 0, y: 0, z: 0), source: startPosition, mockT: Float(i) / 100), toVector: transformModel.getPositionFor(playheadOffset: 0, currentPosition: SCNVector3(x: 0, y: 0, z: 0), source: startPosition, mockT: Float(i + 1) / 100))
                 
                 let material = SCNMaterial()
-                material.diffuse.contents = self.node.uiColor
+                material.diffuse.contents = self.node?.uiColor ?? UIColor(#colorLiteral(red: 1, green: 0.984, blue: 0.259, alpha: 1))
                 geometry.materials = [material]
                 
                 node.geometry = geometry
@@ -160,7 +176,8 @@ struct TransformEditView: View {
         }
     }
     
-    func lineBetween(vector vector1: SCNVector3, toVector vector2: SCNVector3) -> SCNGeometry {
+    /// Creates a line between two points.
+    private func lineBetween(vector vector1: SCNVector3, toVector vector2: SCNVector3) -> SCNGeometry {
         let indices: [Int32] = [0, 1]
         let source = SCNGeometrySource(vertices: [vector1, vector2])
         let element = SCNGeometryElement(indices: indices, primitiveType: .line)
@@ -168,6 +185,7 @@ struct TransformEditView: View {
     }
 }
 
+/// Edit menu for the random transform.
 struct RandomTransformParameterEditView: View {
     @Bindable var transformModel: TransformModel
     
@@ -193,7 +211,7 @@ struct RandomTransformParameterEditView: View {
                 Text("10")
                 
                 Slider(value: radiusBinding, in: 10...50)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("50")
                     .frame(width: 30)
@@ -207,16 +225,21 @@ struct RandomTransformParameterEditView: View {
                 Text("1")
                 
                 Slider(value: frequencyBinding, in: 1...30, step: 1)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("30")
                     .frame(width: 30)
             }
+            
+            Text(transformModel.type.parameterDescription)
+                .font(.body)
         }
     }
 }
 
+/// Edit menu for the spiral transform.
 struct SpiralTransformParameterEditView: View {
+    /// Transform edited by this view.
     @Bindable var transformModel: TransformModel
     
     var body: some View {
@@ -253,7 +276,7 @@ struct SpiralTransformParameterEditView: View {
                 Text("0")
                 
                 Slider(value: startHeightBinding, in: 0...50)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("50")
                     .frame(width: 30)
@@ -267,7 +290,7 @@ struct SpiralTransformParameterEditView: View {
                 Text("0")
                 
                 Slider(value: endHeightBinding, in: 0...50)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("50")
                     .frame(width: 30)
@@ -281,7 +304,7 @@ struct SpiralTransformParameterEditView: View {
                 Text("1")
                 
                 Slider(value: revBinding, in: 1...10, step: 1)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("10")
                     .frame(width: 30)
@@ -295,16 +318,21 @@ struct SpiralTransformParameterEditView: View {
                 Text("0")
                 
                 Slider(value: baseRadiusBinding, in: 0...50)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("50")
                     .frame(width: 30)
             }
+            
+            Text(transformModel.type.parameterDescription)
+                .font(.body)
         }
     }
 }
 
+/// Edit menu for the orbit transform.
 struct OrbitTransformParameterEditView: View {
+    /// Transform edited by this view.
     @Bindable var transformModel: TransformModel
     
     var body: some View {
@@ -341,7 +369,7 @@ struct OrbitTransformParameterEditView: View {
                 Text("0")
                 
                 Slider(value: heightBinding, in: 0...50)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("50")
                     .frame(width: 30)
@@ -355,7 +383,7 @@ struct OrbitTransformParameterEditView: View {
                 Text("0")
                 
                 Slider(value: radiusBinding, in: 0...50)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("50")
                     .frame(width: 30)
@@ -369,7 +397,7 @@ struct OrbitTransformParameterEditView: View {
                 Text("1")
                 
                 Slider(value: revBinding, in: 1...10, step: 1)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("10")
                     .frame(width: 30)
@@ -383,16 +411,21 @@ struct OrbitTransformParameterEditView: View {
                 Text("0")
                 
                 Slider(value: heightModBinding, in: 0...20)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("20")
                     .frame(width: 30)
             }
+            
+            Text(transformModel.type.parameterDescription)
+                .font(.body)
         }
     }
 }
 
+/// Edit menu for the move transform.
 struct MoveTransformParameterEditView: View {
+    /// Transform edited by this view.
     @Bindable var transformModel: TransformModel
     
     var body: some View {
@@ -430,7 +463,7 @@ struct MoveTransformParameterEditView: View {
                     .frame(width: 30)
                 
                 Slider(value: xBinding, in: -50...50)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("50")
                     .frame(width: 30)
@@ -445,7 +478,7 @@ struct MoveTransformParameterEditView: View {
                     .frame(width: 30)
                 
                 Slider(value: yBinding, in: 0...50)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("50")
                     .frame(width: 30)
@@ -460,7 +493,7 @@ struct MoveTransformParameterEditView: View {
                     .frame(width: 30)
                 
                 Slider(value: zBinding, in: -50...50)
-                    .frame(width: 380)
+                    .frame(width: 240)
                 
                 Text("50")
                     .frame(width: 30)
@@ -468,5 +501,8 @@ struct MoveTransformParameterEditView: View {
             
             Toggle("Interpolate", isOn: interpBinding)
         }
+        
+        Text(transformModel.type.parameterDescription)
+            .font(.body)
     }
 }

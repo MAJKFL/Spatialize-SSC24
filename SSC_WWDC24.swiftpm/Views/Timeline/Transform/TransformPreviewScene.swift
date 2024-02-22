@@ -7,9 +7,12 @@
 
 import SceneKit
 
+/// 3D editor preview scene used when editing transforms
 class TransformPreviewScene: SCNScene {
+    /// Rotating node. Other nodes apart from camera are its children.
     var mainNode: SCNNode!
     
+    /// Creates a new 3D editor preview scene.
     func create(previewNode: SCNNode, pathPreviewNodes: [SCNNode], radiusBox: SCNNode) {
         background.contents = UIColor.black
         
@@ -34,6 +37,7 @@ class TransformPreviewScene: SCNScene {
         mainNode.runAction(action)
     }
     
+    /// Creates orbiting camera.
     private func createCamera() {
         let cameraNode = SCNNode()
         cameraNode.name = "camera"
@@ -44,6 +48,7 @@ class TransformPreviewScene: SCNScene {
         rootNode.addChildNode(cameraNode)
     }
     
+    /// Creates checked plane.
     private func createPlane() {
         let boxGeometry = SCNBox(width: 120, height: 0.5 , length: 120, chamferRadius: 0)
         
@@ -61,6 +66,7 @@ class TransformPreviewScene: SCNScene {
         mainNode.addChildNode(boxNode)
     }
     
+    /// Creates spherical listener representation at the center.
     private func createListenerRepresentation() {
         let sphereGeometry = SCNSphere(radius: 4)
         
@@ -79,6 +85,7 @@ class TransformPreviewScene: SCNScene {
         mainNode.addChildNode(sphereNode)
     }
     
+    /// Creates the listener direction arrow.
     private func createDirectionIndicator() {
         let material = SCNMaterial()
         material.diffuse.contents = UIColor.green

@@ -7,7 +7,9 @@
 
 import SwiftUI
 
+/// Changes time signature for the current project.
 struct TimeSignaturePicker: View {
+    /// Current project.
     @Bindable var project: Project
     
     var body: some View {

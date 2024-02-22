@@ -8,11 +8,15 @@
 import SceneKit
 import Combine
 
+/// 3D speaker node visualiser scene.
 class EditorScene: SCNScene {
+    /// View model of the 3D editor.
     var viewModel: EditorViewModel!
     
+    /// Cancellables used by combine listeners.
     private var cancellables = Set<AnyCancellable>()
     
+    /// Creates a new scene for specified view model.
     func create(viewModel: EditorViewModel) {
         self.viewModel = viewModel
         
@@ -30,6 +34,7 @@ class EditorScene: SCNScene {
             .store(in: &cancellables)
     }
     
+    /// Updates speaker nodes visible on the screen.
     private func updateNodes(_ nodes: [SCNNode]) {
         for node in rootNode.childNodes {
             guard let node = node as? SpeakerNode else { continue }
@@ -46,6 +51,7 @@ class EditorScene: SCNScene {
         }
     }
     
+    /// Creates orbiting camera.
     private func createCamera() {
         let cameraNode = SCNNode()
         cameraNode.name = "camera"
@@ -56,6 +62,7 @@ class EditorScene: SCNScene {
         rootNode.addChildNode(cameraNode)
     }
     
+    /// Creates checked plane.
     private func createPlane() {
         let boxGeometry = SCNBox(width: 120, height: 0.5 , length: 120, chamferRadius: 0)
         
@@ -73,6 +80,7 @@ class EditorScene: SCNScene {
         rootNode.addChildNode(boxNode)
     }
     
+    /// Creates spherical listener representation at the center.
     private func createListenerRepresentation() {
         let sphereGeometry = SCNSphere(radius: 4)
         
@@ -91,6 +99,7 @@ class EditorScene: SCNScene {
         rootNode.addChildNode(sphereNode)
     }
     
+    /// Creates the listener direction arrow.
     private func createDirectionIndicator() {
         let material = SCNMaterial()
         material.diffuse.contents = UIColor.green

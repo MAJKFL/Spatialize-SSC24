@@ -7,15 +7,20 @@
 
 import SwiftUI
 
+/// Current selected project view.
 struct ProjectView: View {
+    /// Current project.
     @Bindable var project: Project
     
+    /// Used for adjusting playhead and managing playback.
     @State private var playheadManager: PlayheadManager
-    @State private var editTransform = false
+    /// Transform the user is currently editing size.
     @State private var selectedTransform: TransformModel?
     
+    /// View model of the 3D editor.
     @StateObject var viewModel: EditorViewModel
     
+    /// Creates new project view.
     init(project: Project) {
         self.project = project
         let playheadMng = PlayheadManager(project: project)
@@ -26,35 +31,25 @@ struct ProjectView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                EditorView(project: project, playheadManager: playheadManager, viewModel: viewModel)
+                Color.black
                 
-                transformPicker()
-            }
-            
-            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform, editTransform: editTransform)
-                .frame(height: 350)
-        }
-        .toolbarRole(.editor)
-        .navigationTitle(project.name)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    withAnimation(.spring(duration: 0.15)) {
-                        editTransform.toggle()
-                        
-                        if !editTransform {
-                            selectedTransform = nil
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: editTransform ? "waveform" : "arrow.triangle.swap")
-                        
-                        Text(editTransform ? "Audio" : "Transform")
-                    }
+                HStack(spacing: 0) {
+                    transformPicker()
+                    
+                    Color.secondary
+                        .opacity(0.7)
+                        .frame(width: 2)
+                    
+                    EditorView(project: project, playheadManager: playheadManager, viewModel: viewModel)
                 }
             }
             
+            TimelineView(project: project, playheadManager: playheadManager, selectedTransform: $selectedTransform)
+                .frame(height: 400)
+        }
+        .navigationTitle(project.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
             playheadControls()
             
             ToolbarItem(placement: .topBarTrailing) {
@@ -78,25 +73,42 @@ struct ProjectView: View {
         }
     }
     
-    func transformPicker() -> some View {
-        VStack {
-            Spacer()
-            
-            if editTransform {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 0) {
-                        ForEach(TransformType.allCases, id: \.self) { type in
-                            TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)
-                                .padding()
+    /// Shows available transforms.
+    private func transformPicker() -> some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Transforms")
+                    .font(.title)
+                    .bold()
+                    .foregroundStyle(.white)
+                    .padding([.leading, .vertical])
+                
+                ForEach(TransformType.allCases, id: \.self) { type in
+                    TransformView(transformModel: TransformModel.defaultModel(for: type), isTemplate: true)
+                        .background {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.gray.opacity(0.5))
+                                .strokeBorder(Color.gray, lineWidth: 3)
                         }
-                    }
+                        .draggable(TransformTransfer(model: TransformModel.defaultModel(for: type))) {
+                            Image(systemName: TransformModel.defaultModel(for: type).type.iconName)
+                                .foregroundStyle(Color.white)
+                                .font(.largeTitle)
+                                .padding()
+                                .background {
+                                    Color.gray.opacity(0.8)
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                        }
+                        .frame(height: Constants.nodeViewHeight / 2)
+                        .padding([.horizontal, .bottom])
                 }
-                .background(.thinMaterial)
             }
         }
     }
     
-    func playheadControls() -> ToolbarItemGroup<some View> {
+    /// Buttons responsible for managing the playhead.
+    private func playheadControls() -> ToolbarItemGroup<some View> {
         ToolbarItemGroup(placement: .secondaryAction) {
             Button {
                 playheadManager.jumpBackward()

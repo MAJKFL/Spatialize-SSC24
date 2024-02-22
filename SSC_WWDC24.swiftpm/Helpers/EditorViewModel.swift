@@ -8,18 +8,29 @@
 import Foundation
 import PHASE
 
+/// Manges speaker nodes in the editor
 class EditorViewModel: ObservableObject {
+    /// Speaker nodes visible in the editor.
     @Published var speakerNodes = [SpeakerNode]()
-    
+    /// Current playhead manager.
     @Published var playheadManager: PlayheadManager
     
+    /// Engine used for playback.
     private let phaseEngine: PHASEEngine
+    /// Audio receiver. Used internally by the phaseEngine.
     private let listener: PHASEListener
+    /// Spatial mixer definition used for specifying audio profile in 3d space.
     private let spatialMixerDefinition: PHASESpatialMixerDefinition
     
+    /// Events registered in the engine.
     private var eventIDs = [String]()
+    /// IDs of event's that has already been played.
     private var hasBeenPlayed = [String]()
     
+    /// Specifies wheter some tracks should play solo.
+    var soloMode = false
+    
+    /// Initializes a new EditorViewModel with current playheadManager
     init(playheadManager: PlayheadManager) {
         self.playheadManager = playheadManager
         
@@ -45,6 +56,7 @@ class EditorViewModel: ObservableObject {
         try! phaseEngine.start()
     }
     
+    /// Updates the speaker nodes currently visible in the editor.
     func setSpeakerNodes(for nodes: [Node]) {
         for speakerNode in speakerNodes {
             if !nodes.contains(where: { $0.id == speakerNode.nodeModel.id }) {
@@ -60,19 +72,25 @@ class EditorViewModel: ObservableObject {
             try! phaseEngine.rootObject.addChild(source)
             let sphereNode = SpeakerNode(nodeModel: node, phaseEngine: phaseEngine, phaseSource: source)
             
+            soloMode = soloMode || node.isSolo
+            
             speakerNodes.append(sphereNode)
         }
     }
     
+    /// Updates speaker node color.
     func onNodeColorChange(_ node: Node) {
         speakerNodes.first(where: { $0.name == node.id.uuidString })?.geometry?.firstMaterial?.diffuse.contents = node.uiColor
     }
     
+    /// Updates position of all speaker nodes at given playhead offset.
     func updateSpeakerNodePosition(playheadOffset offset: Double) {
         for speakerNode in speakerNodes {
             speakerNode.updatePosition(playheadOffset: offset, nodePosition: speakerNode.nodeModel.position)
             
-            speakerNode.phaseSource.gain = speakerNode.nodeModel.isPlaying ? speakerNode.nodeModel.volume : 0
+            let areOtherSolo = soloMode && !speakerNode.nodeModel.isSolo
+            
+            speakerNode.phaseSource.gain = speakerNode.nodeModel.isPlaying && !areOtherSolo ? speakerNode.nodeModel.volume : 0
             
             guard playheadManager.isPlaying else { continue }
             
@@ -92,6 +110,7 @@ class EditorViewModel: ObservableObject {
         }
     }
     
+    /// Registers tracks in the engine.
     func registerTracks(_ tracks: [Track]) {
         for track in tracks {
             guard !eventIDs.contains(track.id.uuidString + "-event") else { continue }
@@ -116,6 +135,7 @@ class EditorViewModel: ObservableObject {
         }
     }
     
+    /// Starts or resumes the playback depending wheter it should seek the audio events.
     func startOrResumePlayback(atOffset offset: Double, bpm: Int, shouldSeek: Bool) {
         if shouldSeek {
             hasBeenPlayed = [String]()
@@ -146,6 +166,7 @@ class EditorViewModel: ObservableObject {
         }
     }
     
+    /// Pauses all events.
     func pausePlayback() {
         phaseEngine.soundEvents.forEach { event in
             event.pause()
@@ -154,6 +175,7 @@ class EditorViewModel: ObservableObject {
 }
 
 extension Double {
+    /// Checks if two doubles are equal with given precision.
     func isEqualTo(to b: Double, withPrecision precision: Double) -> Bool {
         return abs(self - b) <= precision
     }
