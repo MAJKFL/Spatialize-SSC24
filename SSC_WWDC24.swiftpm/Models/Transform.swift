@@ -61,7 +61,7 @@ enum TransformType: String, CaseIterable, Codable {
             """
         case .random:
             """
-            This transform moves the node to random points within the specified cube radius.
+            This transform moves the node to random points within the specified box size.
             """
         }
     }
@@ -89,7 +89,7 @@ enum TransformType: String, CaseIterable, Codable {
             """
         case .random:
             """
-            - **r** - Radius of the cube
+            - **size** - Size of the box
             - **freq** - How many times should transform randomly change the node's position
             """
         }

@@ -204,7 +204,7 @@ struct RandomTransformParameterEditView: View {
         
         Section("parameters") {
             HStack {
-                Text("r: \(String(format: "%.1f", transformModel.doubleFields["radius"] ?? 0))")
+                Text("size: \(String(format: "%.1f", transformModel.doubleFields["radius"] ?? 0))")
                 
                 Spacer()
                 

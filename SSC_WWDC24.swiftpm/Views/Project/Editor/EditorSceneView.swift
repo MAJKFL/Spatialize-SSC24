@@ -15,8 +15,6 @@ class EditorSceneView: SCNView {
         self.scene = scene
         scene.create(viewModel: viewModel)
         self.allowsCameraControl = true
-        self.defaultCameraController.maximumVerticalAngle = 90
-        self.defaultCameraController.minimumVerticalAngle = -15
         
         let pinchRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(pinchGesture))
         self.addGestureRecognizer(pinchRecognizer)

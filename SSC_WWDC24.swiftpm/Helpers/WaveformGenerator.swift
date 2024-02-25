@@ -40,8 +40,6 @@ class WaveGenerator {
         }
 
         let samples = UnsafeBufferPointer(start: buffer.floatChannelData![0], count: Int(buffer.frameLength))
-        
-        let rect = CGRect(origin: .zero, size: imageSize)
 
         UIGraphicsBeginImageContextWithOptions(imageSize, false, 0)
 
